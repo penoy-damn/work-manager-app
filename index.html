@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人工作管理系统</title>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #eef2ff;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --primary-gradient-hover: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --success: #10b981;
+  --success-light: #d1fae5;
+  --warning: #f59e0b;
+  --warning-light: #fef3c7;
+  --danger: #ef4444;
+  --danger-light: #fee2e2;
+  --info: #8b5cf6;
+  --info-light: #ede9fe;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #f1f5f9;
+  --sidebar-active-bg: #eef2ff;
+  --sidebar-active-color: #6366f1;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+  --shadow: 0 4px 16px rgba(0,0,0,.06);
+  --shadow-md: 0 8px 30px rgba(0,0,0,.08);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.1);
+  --transition: all .3s cubic-bezier(.4,0,.2,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f5f7fb;
+  color: var(--gray-800);
+  font-size: 14px;
+  line-height: 1.6;
+}
+a { color: var(--primary); text-decoration: none; }
+
+/* ===== Sidebar - Light style like screenshot ===== */
+.sidebar {
+  width: 240px;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  border-right: 1px solid var(--gray-200);
+  box-shadow: 2px 0 20px rgba(0,0,0,.03);
+}
+.sidebar-brand {
+  padding: 28px 24px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sidebar-brand .brand-icon {
+  width: 38px;
+  height: 38px;
+  background: var(--primary-gradient);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(99,102,241,.3);
+}
+.sidebar-brand .brand-icon svg { color: #fff; }
+.sidebar-brand span {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gray-800);
+  letter-spacing: -0.3px;
+}
+.sidebar-nav { flex: 1; padding: 8px 12px; }
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--gray-500);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+  position: relative;
+}
+.sidebar-item:hover {
+  background: var(--gray-50);
+  color: var(--gray-700);
+}
+.sidebar-item.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-color);
+  font-weight: 600;
+}
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--primary-gradient);
+  border-radius: 0 3px 3px 0;
+}
+.sidebar-item svg { flex-shrink: 0; width: 20px; height: 20px; }
+.sidebar-footer {
+  padding: 20px 24px;
+  font-size: 12px;
+  color: var(--gray-400);
+  border-top: 1px solid var(--gray-100);
+}
+
+/* ===== Main Content ===== */
+.main-content {
+  margin-left: 240px;
+  flex: 1;
+  padding: 32px;
+  min-height: 100vh;
+}
+
+/* ===== Cards ===== */
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(0,0,0,.03);
+  transition: var(--transition);
+}
+.card:hover { box-shadow: var(--shadow-md); }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-800);
+  letter-spacing: -0.2px;
+}
+
+/* ===== Stats Cards ===== */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid rgba(0,0,0,.03);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  opacity: 0.06;
+  transform: translate(20px, -20px);
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.stat-icon.blue { background: linear-gradient(135deg, #eef2ff, #e0e7ff); color: var(--primary); }
+.stat-icon.green { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: var(--success); }
+.stat-icon.orange { background: linear-gradient(135deg, #fef3c7, #fde68a); color: var(--warning); }
+.stat-icon.purple { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: var(--info); }
+.stat-info h3 {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--gray-800);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+.stat-info p {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ===== Toolbar ===== */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--gray-200);
+  background: #fff;
+  color: var(--gray-600);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--transition);
+  font-family: inherit;
+  white-space: nowrap;
+  letter-spacing: -0.1px;
+}
+.btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99,102,241,.1);
+}
+.btn-primary {
+  background: var(--primary-gradient);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(99,102,241,.3);
+}
+.btn-primary:hover {
+  background: var(--primary-gradient-hover);
+  border-color: transparent;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99,102,241,.4);
+}
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(16,185,129,.3);
+}
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16,185,129,.4);
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff;
+  border-color: transparent;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(239,68,68,.3);
+}
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239,68,68,.4);
+  color: #fff;
+  border-color: transparent;
+}
+.btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 7px; }
+.btn-group { display: inline-flex; }
+.btn-group .btn {
+  border-radius: 0;
+  margin-left: -1px;
+  box-shadow: none;
+}
+.btn-group .btn:first-child { border-radius: var(--radius-xs) 0 0 var(--radius-xs); margin-left: 0; }
+.btn-group .btn:last-child { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; }
+.btn-group .btn.active {
+  background: var(--primary-gradient);
+  color: #fff;
+  border-color: transparent;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(99,102,241,.25);
+}
+.btn-group .btn:hover:not(.active) {
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===== Form Controls ===== */
+.form-control {
+  padding: 10px 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  color: var(--gray-700);
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  transition: var(--transition);
+}
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99,102,241,.08);
+}
+select.form-control { padding-right: 32px; }
+textarea.form-control { resize: vertical; min-height: 60px; }
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 6px;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ===== Table ===== */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); }
+table.resizable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+table.resizable thead th {
+  background: var(--gray-50);
+  padding: 0;
+  text-align: center;
+  font-weight: 600;
+  color: var(--gray-600);
+  border-bottom: 2px solid var(--gray-100);
+  white-space: nowrap;
+  position: relative;
+  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+table.resizable thead th .th-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  gap: 4px;
+  cursor: pointer;
+}
+table.resizable thead th .th-inner:hover { background: var(--gray-100); }
+table.resizable tbody td {
+  padding: 14px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+table.resizable tbody tr { transition: var(--transition); }
+table.resizable tbody tr:hover { background: var(--primary-light); }
+table.resizable tbody td.cell-name { text-align: left; }
+
+/* Column resize handle */
+.resize-handle { position: absolute; top: 0; right: 0; width: 6px; height: 100%; cursor: col-resize; background: transparent; z-index: 2; }
+.resize-handle:hover, .resize-handle.active { background: var(--primary); opacity: .4; border-radius: 2px; }
+
+/* Sort icons */
+.sort-icon { font-size: 11px; color: var(--gray-300); flex-shrink: 0; margin-left: 2px; }
+.sort-icon.asc, .sort-icon.desc { color: var(--primary); }
+
+/* ===== Badges ===== */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+.badge-pending { background: var(--gray-100); color: var(--gray-500); }
+.badge-progress { background: var(--primary-light); color: var(--primary); }
+.badge-done { background: var(--success-light); color: var(--success); }
+.badge-paused { background: var(--warning-light); color: #d97706; }
+.badge-cancelled { background: var(--danger-light); color: var(--danger); }
+
+/* ===== Inline Edit ===== */
+.inline-edit-trigger { cursor: pointer; border-radius: 6px; transition: var(--transition); }
+.inline-edit-trigger:hover { background: rgba(99,102,241,.08); }
+.inline-select { padding: 4px 8px; border: 1.5px solid var(--primary); border-radius: 6px; font-size: 12px; outline: none; background: #fff; font-family: inherit; }
+.inline-input { padding: 4px 8px; border: 1.5px solid var(--primary); border-radius: 6px; font-size: 12px; outline: none; width: 100%; background: #fff; font-family: inherit; }
+.inline-progress-wrap { display: flex; align-items: center; gap: 6px; }
+.inline-progress-wrap input[type=range] { width: 60px; cursor: pointer; accent-color: var(--primary); }
+.inline-progress-wrap span { font-size: 11px; color: var(--gray-500); min-width: 28px; text-align: right; }
+.cell-editable { position: relative; }
+.cell-editable .edit-hint { display: none; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--gray-300); }
+.cell-editable:hover .edit-hint { display: inline; }
+
+/* ===== Progress Bar ===== */
+.progress {
+  height: 7px;
+  background: var(--gray-100);
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 60px;
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 10px;
+  background: var(--primary-gradient);
+  transition: width .3s;
+}
+
+/* ===== Modal ===== */
+[v-cloak] .modal-overlay { display: none !important; }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: #fff;
+  border-radius: 20px;
+  width: 700px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn .3s ease;
+}
+@keyframes modalIn { from { transform: scale(.95) translateY(10px); opacity:0; } to { transform: scale(1) translateY(0); opacity:1; } }
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.modal-header h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+.modal-close {
+  background: var(--gray-100);
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--gray-400);
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+.modal-close:hover { color: var(--gray-700); background: var(--gray-200); }
+.modal-body { padding: 28px; }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 1px solid var(--gray-100);
+}
+
+/* ===== Tags ===== */
+.tag {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--gray-600);
+  margin: 2px;
+  font-weight: 500;
+}
+
+/* ===== Report Styles ===== */
+.report-container { max-width: 920px; margin: 0 auto; }
+.report-page {
+  background: #fff;
+  padding: 52px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+  border: 1px solid rgba(0,0,0,.03);
+}
+.report-title {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+.report-subtitle { text-align: center; font-size: 14px; color: var(--gray-500); margin-bottom: 36px; font-weight: 500; }
+.report-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--gray-800);
+}
+.report-section { margin-bottom: 32px; }
+.report-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-800);
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+  border-bottom: 3px solid var(--primary);
+  display: inline-block;
+  letter-spacing: -0.2px;
+}
+.report-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.report-kpi {
+  text-align: center;
+  padding: 20px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-100);
+}
+.report-kpi .val { font-size: 30px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+.report-kpi .label { font-size: 12px; color: var(--gray-500); margin-top: 6px; font-weight: 500; }
+.report-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; border-radius: var(--radius-sm); overflow: hidden; }
+.report-table th { background: var(--gray-800); color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
+.report-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); }
+.report-table tr:nth-child(even) { background: var(--gray-50); }
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+.chart-box {
+  padding: 20px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-100);
+}
+.chart-box h4 { font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 12px; text-align: center; }
+.chart-box canvas { max-height: 260px; }
+
+/* Highlights & Issues */
+.highlight-box {
+  padding: 20px 24px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.highlight-box.good { background: #f0fdf4; border-left: 4px solid var(--success); }
+.highlight-box.warn { background: #fffbeb; border-left: 4px solid var(--warning); }
+.highlight-box h4 { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.highlight-box ul { margin: 0; padding-left: 20px; color: var(--gray-600); }
+.highlight-box li { margin-bottom: 6px; }
+
+/* ===== Settings ===== */
+.preset-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.preset-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--gray-100);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--transition);
+}
+.preset-tag:hover { background: var(--primary-light); }
+.preset-tag .remove { cursor: pointer; color: var(--gray-400); font-weight: 700; font-size: 14px; }
+.preset-tag .remove:hover { color: var(--danger); }
+.add-preset { display: inline-flex; gap: 8px; align-items: center; }
+
+/* ===== Empty State ===== */
+.empty-state { text-align: center; padding: 72px 20px; color: var(--gray-400); }
+.empty-state svg { margin-bottom: 18px; }
+.empty-state p { font-size: 15px; font-weight: 500; }
+
+/* ===== Pagination ===== */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+.page-btns { display: flex; gap: 6px; }
+.page-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--transition);
+}
+.page-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.page-btn.active { background: var(--primary-gradient); color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(99,102,241,.3); }
+.page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ===== Confirm ===== */
+.confirm-text { font-size: 15px; line-height: 1.7; color: var(--gray-700); text-align: center; padding: 24px 0; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 2000;
+  padding: 14px 24px;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  animation: slideIn .3s ease;
+}
+.toast-success { background: linear-gradient(135deg, #10b981, #059669); }
+.toast-info { background: var(--primary-gradient); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ===== Responsive ===== */
+@media (max-width:768px) {
+  .sidebar { width: 68px; }
+  .sidebar-brand span, .sidebar-item span { display: none; }
+  .sidebar-item { justify-content: center; padding: 14px; }
+  .sidebar-brand { justify-content: center; padding: 20px 8px; }
+  .main-content { margin-left: 68px; padding: 20px; }
+  .form-row { grid-template-columns: 1fr; }
+  .report-kpi-row { grid-template-columns: repeat(2,1fr); }
+  .chart-row { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+}
+
+/* ===== Print ===== */
+@media print {
+  body { background: #fff; }
+  .sidebar, .toolbar, .no-print, .btn, .modal-overlay, .toast { display: none !important; }
+  .main-content { margin-left: 0; padding: 0; }
+  .report-page { box-shadow: none; padding: 20px 0; }
+  .card { box-shadow: none; border: 1px solid #eee; }
+  .report-table th { background: #333 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report-kpi { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .highlight-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .chart-box { break-inside: avoid; }
+  .report-section { break-inside: avoid; }
+}
+
+.sync-indicator { padding: 12px 20px; border-top: 1px solid var(--sidebar-border); font-size: 12px; color: var(--gray-500); }
+.sync-indicator .sync-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.sync-dot.synced { background: var(--success); }
+.sync-dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
+.sync-dot.error { background: var(--danger); }
+.sync-dot.offline { background: var(--gray-400); }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+.github-config { background: var(--gray-50); border-radius: var(--radius-sm); padding: 16px; margin-top: 12px; }
+.github-config label { display: block; font-size: 12px; color: var(--gray-600); margin: 8px 0 4px; }
+.github-config input { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: var(--radius-xs); font-size: 13px; }
+.github-config .btn-sync { margin-top: 12px; width: 100%; }
+
+</style>
+</head>
+<body>
+<div id="app" v-cloak>
+  <!-- Sidebar - Light Style -->
+  <div class="sidebar no-print">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+      </div>
+      <span>工作管理</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-item" :class="{active:currentTab==='tasks'}" @click="currentTab='tasks'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <span>工作台</span>
+      </div>
+      <div class="sidebar-item" :class="{active:currentTab==='reports'}" @click="currentTab='reports'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>报告中心</span>
+      </div>
+      <div class="sidebar-item" :class="{active:currentTab==='settings'}" @click="currentTab='settings'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>数据管理</span>
+      </div>
+    
+    <div class="sync-indicator" id="syncIndicator">
+      <span class="sync-dot" :class="syncStatus"></span>
+      <span v-if="syncStatus==='synced'">云端已同步</span>
+      <span v-else-if="syncStatus==='syncing'">同步中...</span>
+      <span v-else-if="syncStatus==='error'">同步失败</span>
+      <span v-else-if="githubConfig.token">未同步</span>
+      <span v-else>本地模式</span>
+    </div>
+  </nav>
+    <div class="sidebar-footer">
+      个人工作管理 v2.0
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div v-if="toast.show" class="toast" :class="'toast-'+toast.type">{{toast.msg}}</div>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- ========== 工作台 ========== -->
+    <template v-if="currentTab==='tasks'">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="stat-info"><h3>{{filteredTasks.length}}</h3><p>{{viewLabel}}事项总数</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="stat-info"><h3>{{filteredByStatus('已完成').length}}</h3><p>已完成</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="stat-info"><h3>{{filteredByStatus('进行中').length}}</h3><p>进行中</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          </div>
+          <div class="stat-info"><h3>{{totalHours}}h</h3><p>总耗时</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="btn-group">
+            <button class="btn" :class="{active:viewMode==='all'}" @click="viewMode='all'">全部</button>
+            <button class="btn" :class="{active:viewMode==='day'}" @click="viewMode='day'">日</button>
+            <button class="btn" :class="{active:viewMode==='week'}" @click="viewMode='week'">周</button>
+            <button class="btn" :class="{active:viewMode==='month'}" @click="viewMode='month'">月</button>
+          </div>
+          <input v-if="viewMode==='day'" type="date" class="form-control" v-model="filterDate">
+          <input v-if="viewMode==='week'" type="week" class="form-control" v-model="filterWeek">
+          <input v-if="viewMode==='month'" type="month" class="form-control" v-model="filterMonth">
+          <select class="form-control" v-model="filterStatus">
+            <option value="">全部状态</option>
+            <option v-for="s in statusOptions" :value="s">{{s}}</option>
+          </select>
+          <select class="form-control" v-model="filterDept">
+            <option value="">全部部门</option>
+            <option v-for="d in settings.departments" :value="d">{{d}}</option>
+          </select>
+          <input class="form-control" placeholder="搜索事项名称..." v-model="searchText" style="width:180px;">
+          <div style="flex:1;"></div>
+          <button class="btn btn-primary" @click="openAddModal">+ 新建事项</button>
+        </div>
+
+        <div class="table-wrap" v-if="paginatedTasks.length" ref="tableWrap">
+          <table class="resizable" ref="mainTable">
+            <thead>
+              <tr>
+                <th v-for="(col, ci) in columns" :key="col.key" :style="{width: colWidths[col.key]+'px', minWidth:'40px'}" :data-col="col.key">
+                  <div class="th-inner" @click="toggleSort(col.key)">
+                    <span>{{col.label}}</span>
+                    <span v-if="col.sortable" class="sort-icon" :class="{asc:sortKey===col.key&&sortDir==='asc', desc:sortKey===col.key&&sortDir==='desc'}">
+                      {{sortKey===col.key ? (sortDir==='asc' ? '▲' : '▼') : '⇅'}}
+                    </span>
+                  </div>
+                  <div v-if="ci < columns.length-1" class="resize-handle" @mousedown.prevent="startResize($event, col.key)"></div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(task, idx) in paginatedTasks" :key="task.id">
+                <td style="color:var(--gray-400);font-weight:500;">{{(currentPage-1)*pageSize+idx+1}}</td>
+                <td class="cell-editable cell-name" @dblclick="startInlineEdit(task,'name')">
+                  <template v-if="inlineEditing.id===task.id && inlineEditing.field==='name'">
+                    <input class="inline-input" :value="task.name" @blur="finishInlineEdit(task,'name',$event.target.value)" @keyup.enter="$event.target.blur()" @keyup.escape="cancelInlineEdit" ref="inlineInput" autofocus>
+                  </template>
+                  <template v-else>
+                    <div style="font-weight:600;color:var(--gray-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{task.name}}</div>
+                    <div v-if="task.description" style="font-size:12px;color:var(--gray-400);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">{{task.description}}</div>
+                    <span class="edit-hint">双击</span>
+                  </template>
+                </td>
+                <td class="cell-editable" @dblclick="startInlineEdit(task,'department')">
+                  <template v-if="inlineEditing.id===task.id && inlineEditing.field==='department'">
+                    <select class="inline-select" :value="task.department" @change="finishInlineEdit(task,'department',$event.target.value)" @blur="cancelInlineEdit">
+                      <option value="">未分类</option>
+                      <option v-for="d in settings.departments" :value="d">{{d}}</option>
+                    </select>
+                  </template>
+                  <template v-else>
+                    <span class="tag inline-edit-trigger">{{task.department || '未分类'}}</span>
+                    <span class="edit-hint">双击</span>
+                  </template>
+                </td>
+                <td class="cell-editable" @dblclick="startInlineEdit(task,'category')">
+                  <template v-if="inlineEditing.id===task.id && inlineEditing.field==='category'">
+                    <select class="inline-select" :value="task.category" @change="finishInlineEdit(task,'category',$event.target.value)" @blur="cancelInlineEdit">
+                      <option value="">未分类</option>
+                      <option v-for="c in settings.categories" :value="c">{{c}}</option>
+                    </select>
+                  </template>
+                  <template v-else>
+                    <span class="tag inline-edit-trigger">{{task.category || '未分类'}}</span>
+                    <span class="edit-hint">双击</span>
+                  </template>
+                </td>
+                <td class="cell-editable">
+                  <template v-if="inlineEditing.id===task.id && inlineEditing.field==='status'">
+                    <select class="inline-select" :value="task.status" @change="finishInlineEdit(task,'status',$event.target.value)" @blur="cancelInlineEdit">
+                      <option v-for="s in statusOptions" :value="s">{{s}}</option>
+                    </select>
+                  </template>
+                  <template v-else>
+                    <span class="badge inline-edit-trigger" :class="statusClass(task.status)" @click="startInlineEdit(task,'status')" title="点击切换状态">{{task.status}}</span>
+                  </template>
+                </td>
+                <td class="cell-editable">
+                  <template v-if="inlineEditing.id===task.id && inlineEditing.field==='progress'">
+                    <div class="inline-progress-wrap">
+                      <input type="range" :value="task.progress" min="0" max="100" step="5" @change="finishInlineEdit(task,'progress',Number($event.target.value))">
+                      <span>{{task.progress}}%</span>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;" @click="startInlineEdit(task,'progress')" title="点击调整进度">
+                      <div class="progress" style="width:60px;"><div class="progress-bar" :style="{width:task.progress+'%',background:task.progress>=100?'linear-gradient(135deg, #10b981, #059669)':'var(--primary-gradient)'}"></div></div>
+                      <span style="font-size:12px;color:var(--gray-500);font-weight:500;">{{task.progress}}%</span>
+                    </div>
+                  </template>
+                </td>
+                <td style="font-size:12px;white-space:nowrap;color:var(--gray-500);">{{formatDate(task.startTime)}}</td>
+                <td class="cell-editable" @dblclick="startInlineEdit(task,'timeSpent')">
+                  <template v-if="inlineEditing.id===task.id && inlineEditing.field==='timeSpent'">
+                    <input class="inline-input" type="number" :value="task.timeSpent" min="0" step="0.5" style="width:60px;" @blur="finishInlineEdit(task,'timeSpent',Number($event.target.value))" @keyup.enter="$event.target.blur()" @keyup.escape="cancelInlineEdit">
+                  </template>
+                  <template v-else>
+                    <span class="inline-edit-trigger" style="white-space:nowrap;font-weight:500;">{{task.timeSpent ? task.timeSpent+'h' : '-'}}</span>
+                    <span class="edit-hint">双击</span>
+                  </template>
+                </td>
+                <td>
+                  <button class="btn btn-sm" @click="openEditModal(task)" title="编辑">编辑</button>
+                  <button class="btn btn-sm" style="color:var(--danger);border-color:var(--danger-light);" @click="confirmDelete(task)" title="删除">删除</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="empty-state">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--gray-300);"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+          <p>暂无事项数据</p>
+          <button class="btn btn-primary" style="margin-top:16px;" @click="openAddModal">+ 新建事项</button>
+        </div>
+
+        <div class="pagination" v-if="filteredTasks.length > pageSize">
+          <span>共 {{filteredTasks.length}} 条，第 {{currentPage}}/{{totalPages}} 页</span>
+          <div class="page-btns">
+            <button class="page-btn" :disabled="currentPage<=1" @click="currentPage--">&lt;</button>
+            <button class="page-btn" v-for="p in visiblePages" :key="p" :class="{active:p===currentPage}" @click="currentPage=p">{{p}}</button>
+            <button class="page-btn" :disabled="currentPage>=totalPages" @click="currentPage++">&gt;</button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ========== 报告中心 ========== -->
+    <template v-if="currentTab==='reports'">
+      <div class="card no-print">
+        <div class="card-header"><div class="card-title">生成工作报告</div></div>
+        <div class="toolbar">
+          <div class="btn-group">
+            <button class="btn" :class="{active:reportType==='weekly'}" @click="reportType='weekly'">周报</button>
+            <button class="btn" :class="{active:reportType==='monthly'}" @click="reportType='monthly'">月报</button>
+            <button class="btn" :class="{active:reportType==='annual'}" @click="reportType='annual'">年报</button>
+          </div>
+          <input v-if="reportType==='weekly'" type="week" class="form-control" v-model="reportWeek">
+          <input v-if="reportType==='monthly'" type="month" class="form-control" v-model="reportMonth">
+          <input v-if="reportType==='annual'" type="number" class="form-control" v-model.number="reportYear" min="2020" max="2030" style="width:100px;">
+          <select class="form-control" v-model="reportDeptFilter">
+            <option value="">整体工作汇报</option>
+            <option v-for="d in settings.departments" :value="d">{{d}}</option>
+          </select>
+          <button class="btn btn-primary" @click="generateReport">生成报告</button>
+          <button v-if="reportGenerated" class="btn btn-success" @click="printReport">打印报告</button>
+        </div>
+      </div>
+
+      <div v-if="reportGenerated" class="report-container" id="report-content">
+        <div class="report-page">
+          <div class="report-title">{{reportData.title}}</div>
+          <div class="report-subtitle">{{reportData.period}}</div>
+          <div class="report-meta">
+            <span>报告人：{{settings.userName || '未设置'}}</span>
+            <span>{{reportDeptFilter ? '汇报部门：'+reportDeptFilter : '汇报范围：全部门'}}</span>
+            <span>生成时间：{{reportData.generatedAt}}</span>
+          </div>
+
+          <!-- 一、工作概述 -->
+          <div class="report-section">
+            <h3>一、工作概述</h3>
+            <div class="report-kpi-row">
+              <div class="report-kpi"><div class="val">{{reportData.stats.total}}</div><div class="label">事项总数</div></div>
+              <div class="report-kpi"><div class="val">{{reportData.stats.completed}}</div><div class="label">已完成</div></div>
+              <div class="report-kpi"><div class="val" style="color:var(--success);">{{reportData.stats.completionRate}}%</div><div class="label">完成率</div></div>
+              <div class="report-kpi"><div class="val" style="color:var(--warning);">{{reportData.stats.totalHours}}h</div><div class="label">总耗时</div></div>
+            </div>
+            <p style="font-size:13px;color:var(--gray-600);line-height:1.9;">{{reportData.summary}}</p>
+          </div>
+
+          <!-- 二、部门工作量明细 -->
+          <div class="report-section" v-if="reportData.deptBreakdown.length">
+            <h3>二、部门工作量明细</h3>
+            <table class="report-table">
+              <thead><tr><th>部门</th><th>事项总数</th><th>已完成</th><th>完成率</th><th>总耗时</th><th>耗时占比</th></tr></thead>
+              <tbody>
+                <tr v-for="d in reportData.deptBreakdown" :key="d.name">
+                  <td style="font-weight:600;">{{d.name}}</td>
+                  <td>{{d.total}}</td>
+                  <td>{{d.completed}}</td>
+                  <td>{{d.rate}}%</td>
+                  <td>{{d.hours}}h</td>
+                  <td style="color:var(--primary);font-weight:600;">{{d.hoursPercent}}%</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="chart-row" style="margin-top:20px;">
+              <div class="chart-box"><h4>各部门耗时占比</h4><canvas id="chart-dept-hours-pie"></canvas></div>
+              <div class="chart-box"><h4>各部门事项数占比</h4><canvas id="chart-dept-count-pie"></canvas></div>
+            </div>
+          </div>
+
+          <!-- 三、数据分析 -->
+          <div class="report-section">
+            <h3>三、数据分析</h3>
+            <p style="font-size:13px;color:var(--gray-600);line-height:1.9;margin-bottom:18px;">{{reportData.analysisSummary}}</p>
+
+            <!-- 3.1 各部门工作类型耗时分析 -->
+            <div style="font-size:14px;font-weight:600;color:var(--gray-700);margin-bottom:12px;">3.1 各部门工作类型耗时分析</div>
+            <p style="font-size:12px;color:var(--gray-500);margin-bottom:14px;">按部门分别展示各类型工作的耗时分布，帮助了解各板块资源投入方向。</p>
+            <div v-if="reportData.crossAnalysis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+              <div v-for="row in reportData.crossAnalysis.rows" :key="row.dept" style="background:var(--gray-50);border-radius:var(--radius-sm);padding:16px;border:1px solid var(--gray-100);">
+                <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:10px;text-align:center;">{{row.dept}}（{{row.totalHours}}h）</div>
+                <canvas :id="'chart-cross-'+row.dept.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g,'_')" style="max-height:220px;"></canvas>
+              </div>
+            </div>
+
+            <!-- 3.2 耗时效率分析 -->
+            <div style="font-size:14px;font-weight:600;color:var(--gray-700);margin:24px 0 12px;">3.2 耗时效率分析</div>
+            <table class="report-table" v-if="reportData.timeAnalysis">
+              <thead><tr><th>指标</th><th>数值</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr v-for="item in reportData.timeAnalysis" :key="item.label">
+                  <td style="font-weight:500;">{{item.label}}</td>
+                  <td style="color:var(--primary);font-weight:700;">{{item.value}}</td>
+                  <td style="color:var(--gray-500);">{{item.desc}}</td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+
+          <!-- 四、重点工作完成情况（按部门+类型汇总，表格形式） -->
+          <div class="report-section" v-if="reportData.deptWorkSummary && reportData.deptWorkSummary.length">
+            <h3>四、重点工作完成情况</h3>
+            <div v-for="dept in reportData.deptWorkSummary" :key="dept.name" style="margin-bottom:24px;">
+              <div style="font-size:14px;font-weight:700;color:var(--gray-800);margin-bottom:10px;padding:8px 14px;background:var(--primary-light);border-radius:var(--radius-xs);display:inline-block;">
+                {{dept.name}} <span style="font-weight:400;font-size:12px;color:var(--gray-500);margin-left:8px;">累计 {{dept.total}} 项，完成 {{dept.completed}} 项，总耗时 {{dept.hours}}h</span>
+              </div>
+              <table class="report-table">
+                <thead>
+                  <tr><th>工作类型</th><th>事项数</th><th>耗时(h)</th><th>主要内容</th></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="cat in dept.categories" :key="cat.name">
+                    <td style="font-weight:600;white-space:nowrap;">{{cat.name}}</td>
+                    <td style="text-align:center;">{{cat.count}}</td>
+                    <td style="text-align:center;color:var(--primary);font-weight:600;">{{cat.hours}}</td>
+                    <td style="font-size:12px;color:var(--gray-600);line-height:1.7;">{{cat.summary}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 五、工作亮点与不足 -->
+          <div class="report-section" v-if="reportData.highlights?.length || reportData.issues?.length">
+            <h3>五、工作亮点与不足</h3>
+            <p style="font-size:13px;color:var(--gray-600);line-height:1.9;margin-bottom:16px;" v-if="reportData.highlightsSummary">{{reportData.highlightsSummary}}</p>
+            <div class="highlight-box good" v-if="reportData.highlights.length">
+              <h4><span style="color:var(--success);">&#10003;</span> 工作亮点</h4>
+              <ul><li v-for="h in reportData.highlights" :key="h">{{h}}</li></ul>
+            </div>
+            <div class="highlight-box warn" v-if="reportData.issues.length">
+              <h4><span style="color:var(--warning);">&#9888;</span> 待改进项</h4>
+              <ul><li v-for="i in reportData.issues" :key="i">{{i}}</li></ul>
+            </div>
+          </div>
+
+          <!-- 六、下月工作规划 -->
+          <div class="report-section" v-if="reportData.nextMonthPlanByDept && reportData.nextMonthPlanByDept.length">
+            <h3>六、下月工作规划</h3>
+            <p style="font-size:13px;color:var(--gray-600);line-height:1.9;margin-bottom:16px;" v-if="reportData.nextMonthPlanSummary">{{reportData.nextMonthPlanSummary}}</p>
+            <div v-if="reportData.conclusion" style="padding:18px;background:var(--primary-light);border-radius:var(--radius-sm);border:1px solid rgba(99,102,241,.1);margin-bottom:18px;">
+              <div style="font-size:13px;font-weight:600;color:var(--primary);margin-bottom:8px;">总结与展望</div>
+              <p style="font-size:13px;color:var(--gray-700);line-height:1.9;white-space:pre-wrap;margin:0;">{{reportData.conclusion}}</p>
+            </div>
+            <textarea class="form-control no-print" v-model="reportData.conclusion" style="width:100%;min-height:120px;margin-bottom:18px;" placeholder="可在此编辑补充总结与展望内容..."></textarea>
+            <div v-for="dept in reportData.nextMonthPlanByDept" :key="dept.name" style="margin-bottom:24px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--primary);">
+                <h4 style="margin:0;font-size:14px;font-weight:600;color:var(--primary);">{{dept.name}}</h4>
+                <span style="font-size:12px;color:var(--gray-500);">共{{dept.total}}项 / {{dept.hours}}h</span>
+              </div>
+              <div v-for="cat in dept.categories" :key="cat.name" style="margin-bottom:16px;padding-left:12px;">
+                <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">
+                  {{cat.name}}
+                  <span style="font-weight:400;color:var(--gray-500);font-size:12px;">（{{cat.count}}项 / {{cat.hours}}h）</span>
+                </div>
+                <p v-if="cat.summary" style="font-size:12px;color:var(--gray-600);line-height:1.8;margin:0 0 8px 0;">{{cat.summary}}</p>
+                <table class="report-table" style="font-size:12px;">
+                  <thead><tr><th>事项名称</th><th>类型</th><th>当前状态</th><th>当前进度</th><th>事项说明</th></tr></thead>
+                  <tbody>
+                    <tr v-for="t in cat.tasks" :key="t.id">
+                      <td style="font-weight:500;">{{t.name}}</td>
+                      <td>{{t.category || '-'}}</td>
+                      <td>{{t.status}}</td>
+                      <td>{{t.progress}}%</td>
+                      <td style="max-width:200px;">{{t.notes || t.description || '-'}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="card" style="text-align:center;padding:72px;">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        <p style="color:var(--gray-400);margin-top:16px;font-size:15px;font-weight:500;">选择报告类型、时间范围和部门后，点击"生成报告"</p>
+      </div>
+    </template>
+
+    <!-- ========== 数据管理 ========== -->
+    <template v-if="currentTab==='settings'">
+      <div class="card">
+        <div class="card-header"><div class="card-title">个人信息设置</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">姓名</label>
+            <input class="form-control" v-model="settings.userName" placeholder="您的姓名" style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">职位</label>
+            <input class="form-control" v-model="settings.userTitle" placeholder="您的职位" style="width:100%;">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">部门预设</div></div>
+        <div class="preset-list">
+          <span class="preset-tag" v-for="(d,i) in settings.departments" :key="i">
+            {{d}} <span class="remove" @click="settings.departments.splice(i,1);saveSettings()">&times;</span>
+          </span>
+        </div>
+        <div class="add-preset">
+          <input class="form-control" v-model="newDept" placeholder="新增部门" @keyup.enter="addDept" style="width:160px;">
+          <button class="btn btn-sm btn-primary" @click="addDept">添加</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">类型预设</div></div>
+        <div class="preset-list">
+          <span class="preset-tag" v-for="(c,i) in settings.categories" :key="i">
+            {{c}} <span class="remove" @click="settings.categories.splice(i,1);saveSettings()">&times;</span>
+          </span>
+        </div>
+        <div class="add-preset">
+          <input class="form-control" v-model="newCat" placeholder="新增类型" @keyup.enter="addCat" style="width:160px;">
+          <button class="btn btn-sm btn-primary" @click="addCat">添加</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">数据备份与恢复</div></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-primary" @click="exportData">导出数据 (JSON)</button>
+          <button class="btn" @click="$refs.importFile.click()">导入数据 (JSON)</button>
+          <input type="file" ref="importFile" accept=".json" @change="importData" style="display:none;">
+          <button class="btn btn-danger" @click="showClearConfirm=true">清空所有数据</button>
+        </div>
+        <p style="font-size:12px;color:var(--gray-400);margin-top:12px;">导出的 JSON 文件包含所有待办事项和配置信息，可用于备份和迁移。</p>
+        <div style="margin-top:18px;padding:18px;background:var(--gray-50);border-radius:var(--radius-sm);border:1px solid var(--gray-100);">
+          <div style="font-size:13px;color:var(--gray-500);">
+            数据统计：共 <strong style="color:var(--gray-800);">{{tasks.length}}</strong> 条事项，
+            最近更新：<strong style="color:var(--gray-800);">{{lastUpdated}}</strong>
+          </div>
+
+        <div class="settings-card" style="margin-top: 20px;">
+          <h3 style="margin-bottom: 12px;">☁️ 云端同步 (GitHub)</h3>
+          <p style="color: var(--gray-500); font-size: 13px; margin-bottom: 12px;">
+            配置后数据自动同步到 GitHub 私有仓库，换电脑换浏览器数据不丢失。
+          </p>
+          <div class="github-config">
+            <label>GitHub 用户名</label>
+            <input v-model="githubConfig.username" placeholder="你的GitHub用户名" @change="saveGithubConfig">
+            <label>Personal Access Token</label>
+            <input v-model="githubConfig.token" type="password" placeholder="ghp_xxxx（勾选repo权限）" @change="saveGithubConfig">
+            <label>仓库名称</label>
+            <input v-model="githubConfig.repo" placeholder="my-work" @change="saveGithubConfig">
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+              <button class="btn btn-primary btn-sync" @click="syncToGithub" :disabled="syncStatus==='syncing'">
+                {{ syncStatus === 'syncing' ? '同步中...' : '↑ 上传到云端' }}
+              </button>
+              <button class="btn btn-outline btn-sync" @click="syncFromGithub" :disabled="syncStatus==='syncing'">
+                ↓ 从云端下载
+              </button>
+            </div>
+            <div v-if="lastSyncTime" style="margin-top: 10px; font-size: 12px; color: var(--gray-500);">
+              上次同步：{{ lastSyncTime }}
+            </div>
+          </div>
+        </div>
+
+        </div>
+      </div>
+
+      <!-- 自动备份设置 -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">定时自动备份</div></div>
+        <div v-if="!autoBackup.enabled" style="padding:8px 0;">
+          <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px;">
+            设置后，每到指定日期打开本页面时将自动备份数据到您选定的文件夹，无需手动操作。
+          </p>
+          <button class="btn btn-primary" @click="pickBackupFolder">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            选择备份文件夹并开启
+          </button>
+          <p style="font-size:11px;color:var(--gray-400);margin-top:10px;">需使用 Chrome 或 Edge 浏览器（86+版本），首次使用时浏览器会请求文件夹访问权限。</p>
+        </div>
+        <div v-else>
+          <div style="padding:18px;background:var(--success-light);border-radius:var(--radius-sm);margin-bottom:16px;display:flex;align-items:center;gap:14px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--gray-800);">自动备份已开启</div>
+              <div style="font-size:12px;color:var(--gray-600);margin-top:2px;">备份到：{{autoBackup.folderName}} &nbsp;|&nbsp; 每{{getBackupDayLabel(autoBackup.day)}}自动备份</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label class="form-label" style="margin:0;white-space:nowrap;">备份日：</label>
+              <select class="form-control" v-model.number="autoBackup.day" @change="saveBackupConfig" style="width:auto;">
+                <option :value="1">每周一</option>
+                <option :value="2">每周二</option>
+                <option :value="3">每周三</option>
+                <option :value="4">每周四</option>
+                <option :value="5">每周五</option>
+                <option :value="6">每周六</option>
+                <option :value="0">每周日</option>
+              </select>
+            </div>
+            <button class="btn btn-sm" @click="pickBackupFolder">更换文件夹</button>
+            <button class="btn btn-sm btn-primary" @click="doManualBackupToFolder">立即备份一次</button>
+            <button class="btn btn-sm" style="color:var(--danger);border-color:var(--danger-light);" @click="disableAutoBackup">关闭自动备份</button>
+          </div>
+          <div v-if="lastAutoBackupDate" style="font-size:12px;color:var(--gray-400);margin-top:12px;">
+            上次自动备份：{{lastAutoBackupDate}}
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- 事项编辑弹窗 -->
+  <div class="modal-overlay" v-if="showModal" @click.self="showModal=false">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>{{editingTask.id ? '编辑事项' : '新建事项'}}</h3>
+        <button class="modal-close" @click="showModal=false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">事项名称 *</label>
+            <input class="form-control" v-model="editingTask.name" placeholder="请输入事项名称" style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">归属部门</label>
+            <select class="form-control" v-model="editingTask.department" style="width:100%;">
+              <option value="">请选择</option>
+              <option v-for="d in settings.departments" :value="d">{{d}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">归属类型</label>
+            <select class="form-control" v-model="editingTask.category" style="width:100%;">
+              <option value="">请选择</option>
+              <option v-for="c in settings.categories" :value="c">{{c}}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">状态</label>
+            <select class="form-control" v-model="editingTask.status" style="width:100%;">
+              <option v-for="s in statusOptions" :value="s">{{s}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">描述</label>
+          <textarea class="form-control" v-model="editingTask.description" placeholder="事项详细描述" style="width:100%;"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">开始时间</label>
+            <input type="datetime-local" class="form-control" v-model="editingTask.startTime" style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">实际完成时间</label>
+            <input type="datetime-local" class="form-control" v-model="editingTask.completionTime" style="width:100%;">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">耗时 (小时)</label>
+            <input type="number" class="form-control" v-model.number="editingTask.timeSpent" min="0" step="0.5" placeholder="0" style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">进度百分比</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input type="range" v-model.number="editingTask.progress" min="0" max="100" step="5" style="flex:1;accent-color:var(--primary);">
+              <span style="font-size:15px;font-weight:700;min-width:40px;text-align:right;color:var(--primary);">{{editingTask.progress}}%</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">成果总结</label>
+          <textarea class="form-control" v-model="editingTask.summary" placeholder="完成后的成果说明" style="width:100%;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">事项说明</label>
+          <textarea class="form-control" v-model="editingTask.notes" placeholder="备注信息" style="width:100%;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" @click="showModal=false">取消</button>
+        <button class="btn btn-primary" @click="saveTask">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div class="modal-overlay" v-if="showDeleteConfirm" @click.self="showDeleteConfirm=false">
+    <div class="modal" style="width:420px;">
+      <div class="modal-header"><h3>确认删除</h3><button class="modal-close" @click="showDeleteConfirm=false">&times;</button></div>
+      <div class="modal-body">
+        <div class="confirm-text">确定要删除事项「{{deletingTask?.name}}」吗？<br>此操作不可撤销。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" @click="showDeleteConfirm=false">取消</button>
+        <button class="btn btn-danger" @click="doDelete">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 清空确认弹窗 -->
+  <div class="modal-overlay" v-if="showClearConfirm" @click.self="showClearConfirm=false">
+    <div class="modal" style="width:420px;">
+      <div class="modal-header"><h3>确认清空</h3><button class="modal-close" @click="showClearConfirm=false">&times;</button></div>
+      <div class="modal-body">
+        <div class="confirm-text">确定要清空所有数据吗？<br>建议先导出备份。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" @click="showClearConfirm=false">取消</button>
+        <button class="btn btn-danger" @click="clearAll">确认清空</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.print-only { display:none; }
+@media print { .print-only { display:block !important; } .no-print { display:none !important; } }
+</style>
+
+<script>
+const { createApp } = Vue;
+
+const STORAGE_KEY = 'work_manager_tasks';
+const SETTINGS_KEY = 'work_manager_settings';
+const COLWIDTH_KEY = 'work_manager_colwidths';
+
+const defaultSettings = {
+  userName: '',
+  userTitle: '',
+  departments: ['技术部', '产品部', '运营部', '市场部', '行政部', '财务部'],
+  categories: ['日常运维', '项目开发', '需求分析', '会议沟通', '文档编写', '问题排查', '技术调研', '培训学习', '跨部门协作']
+};
+
+const defaultColWidths = { idx:50, name:200, department:100, category:100, status:90, progress:120, startTime:110, timeSpent:70, actions:110 };
+
+function uuid() {
+  return 'xxxx-xxxx'.replace(/x/g, () => ((Math.random()*16)|0).toString(16));
+}
+
+function getWeekRange(weekStr) {
+  if (!weekStr) return [null,null];
+  const [y, w] = weekStr.split('-W').map(Number);
+  const jan1 = new Date(y, 0, 1);
+  const days = (w - 1) * 7;
+  const dayOfWeek = jan1.getDay() || 7;
+  const monday = new Date(y, 0, 1 + days - dayOfWeek + 1);
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  sunday.setHours(23,59,59);
+  return [monday, sunday];
+}
+
+function getMonthRange(monthStr) {
+  if (!monthStr) return [null,null];
+  const [y, m] = monthStr.split('-').map(Number);
+  return [new Date(y, m-1, 1), new Date(y, m, 0, 23, 59, 59)];
+}
+
+function getYearRange(year) {
+  return [new Date(year, 0, 1), new Date(year, 11, 31, 23, 59, 59)];
+}
+
+function getWeekNumber(d) {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+const COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#06b6d4','#84cc16'];
+
+createApp({
+  data() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth()+1).padStart(2,'0');
+    const d = String(now.getDate()).padStart(2,'0');
+    const wn = String(getWeekNumber(now)).padStart(2,'0');
+    return {
+      currentTab: 'tasks',
+      tasks: [{"id": "49f1-f1cd", "department": "集团财务与国资事业部", "category": "财务与国资-体系化建设", "name": "战略客户和主动经营客户知识地图", "description": "", "status": "未开始", "startTime": "2026-04-01T21:05", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-04-22T07:43:27.473Z"}, {"id": "854b-a837", "department": "集团财务与国资事业部", "category": "财务与国资-体系化建设", "name": "销售三法知识地图/交付直签知识地图", "description": "", "status": "未开始", "startTime": "2026-04-01T21:07", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-04-22T07:43:37.194Z"}, {"id": "be17-2a54", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "个人待办事项表优化，可参考月度报告", "description": "", "status": "已完成", "startTime": "2026-04-10T21:07", "completionTime": "", "summary": "", "timeSpent": 8, "progress": 100, "notes": "", "updatedAt": "2026-04-20T02:41:04.353Z"}, {"id": "ea2d-b553", "department": "建筑房地产事业部", "category": "CRU-会议管理", "name": "季度例会会议通知", "description": "", "status": "已完成", "startTime": "2026-04-13T21:08", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-04-17T03:04:16.129Z"}, {"id": "1dd2-0771", "department": "建筑房地产事业部", "category": "CRU-运营管理", "name": "研究一下如何通过AI工具支持部门运营管理，比如经理人例会代办事项由AI跟踪闭环管理。", "description": "", "status": "已完成", "startTime": "2026-04-10T21:08", "completionTime": "", "summary": "", "timeSpent": 10, "progress": 100, "notes": "", "updatedAt": "2026-04-20T02:40:49.595Z"}, {"id": "45e5-69fb", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "季度评优：收集各部门季度评优相关数据+发送全员评优问卷+结果分析", "description": "", "status": "已完成", "startTime": "2026-04-10T21:08", "completionTime": "", "summary": "", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-21T08:25:40.840Z"}, {"id": "2ca5-354d", "department": "集团财务与国资事业部", "category": "客户接待", "name": "巴彦淖尔市能源(集团)有限公司接待", "description": "", "status": "已完成", "startTime": "2026-04-08T21:09", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-04-20T02:40:32.135Z"}, {"id": "e67e-ea24", "department": "建筑房地产事业部", "category": "CRU-运营管理", "name": "验收项目梳理+销售抓取", "description": "", "status": "已完成", "startTime": "2026-04-13T21:09", "completionTime": "", "summary": "", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-23T07:32:46.985Z"}, {"id": "e97e-932a", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "售前及实施顾问2025年调研问卷结果分析", "description": "", "status": "已取消", "startTime": "2026-02-28T21:10", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-04-22T12:33:36.577Z"}, {"id": "f071-821a", "department": "建筑房地产事业部", "category": "CRU-运营管理", "name": "EAS老客户数据梳理", "description": "", "status": "已完成", "startTime": "2026-04-02T21:10", "completionTime": "", "summary": "", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-13T13:11:28.580Z"}, {"id": "5b8b-84b3", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "与客户成功部沟通交流战略客户经营并输出会议纪要", "description": "", "status": "已完成", "startTime": "2026-04-10T21:11", "completionTime": "", "summary": "参与会议并输出会议纪要", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-13T13:12:12.462Z"}, {"id": "421c-9390", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "参加战略客户沟通交流会并输出会议纪要-与李红（原战略客户负责人）", "description": "", "status": "已完成", "startTime": "2026-04-09T21:12", "completionTime": "", "summary": "参与会议并输出会议纪要", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-13T13:13:06.603Z"}, {"id": "60ce-dbd8", "department": "建筑房地产事业部", "category": "CRU-行业经营管理", "name": "周度经营数据分析", "description": "", "status": "已完成", "startTime": "2026-04-13T21:40", "completionTime": "", "summary": "输出周度经营分析报告", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-13T13:40:40.265Z"}, {"id": "1534-ecd8", "department": "建筑房地产事业部", "category": "CRU-会议管理", "name": "组织参加经理人周例会并输出会议纪要", "description": "", "status": "已完成", "startTime": "2026-04-13T21:41", "completionTime": "", "summary": "", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-14T07:36:56.469Z"}, {"id": "e7a7-c1e1", "department": "建筑房地产事业部", "category": "CRU-运营管理", "name": "产品结算数据结构优化：续费拆分为基础续费+向上销售", "description": "", "status": "已完成", "startTime": "2026-04-13T21:42", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-04-17T12:54:26.657Z"}, {"id": "8b42-c87e", "department": "集团财务与国资事业部", "category": "财务与国资-部门管理相关", "name": "组织参加国资战客经营部的月度例会并输出会议纪要", "description": "", "status": "已完成", "startTime": "2026-04-07T21:43", "completionTime": "", "summary": "组织会议、输出会议纪要", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-14T02:42:48.207Z"}, {"id": "0ce9-3b38", "department": "集团财务与国资事业部", "category": "财务与国资-部门管理相关", "name": "3月工时填报督促", "description": "", "status": "已完成", "startTime": "2026-04-13T21:44", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-05-07T07:12:26.868Z"}, {"id": "ba55-085f", "department": "集团财务与国资事业部", "category": "客户接待", "name": "厦门路桥客户接待相关事宜", "description": "", "status": "已完成", "startTime": "2026-04-08T21:44", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-04-14T02:15:40.973Z"}, {"id": "dd52-8889", "department": "集团财务与国资事业部", "category": "财务与国资-部门管理相关", "name": "月度汇报材料", "description": "月度工作总结及次月工作计划", "status": "已完成", "startTime": "2026-04-07T10:15", "completionTime": "", "summary": "输出月度总结报告", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-04-14T02:16:55.774Z"}, {"id": "aa5f-1782", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "3月执行力数据填报督促", "description": "", "status": "已完成", "startTime": "2026-04-02T10:34", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-04-14T02:42:53.615Z"}, {"id": "336d-f508", "department": "集团财务与国资事业部", "category": "客户接待", "name": "大客户接待checklist优化", "description": "在原有接待资料的基础上，根据当前最新情况，更新大客户接待相关资料，及新增客户接待checklist", "status": "已完成", "startTime": "2026-04-07T10:34", "completionTime": "", "summary": "大客户接待checklist", "timeSpent": 8, "progress": 100, "notes": "", "updatedAt": "2026-04-14T02:38:17.272Z"}, {"id": "0a20-7241", "department": "集团财务与国资事业部", "category": "阵地战经营", "name": "喜报-太原分公司EAS焕新升级喜报审核", "description": "", "status": "已完成", "startTime": "2026-04-07T10:38", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-04-14T02:40:05.257Z"}, {"id": "e0f7-1e3e", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "绩效面谈表设计及督促各部门经理人完成绩效面谈", "description": "", "status": "已完成", "startTime": "2026-04-03T10:40", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-04-14T02:40:50.264Z"}, {"id": "27b7-1a3d", "department": "集团财务与国资事业部", "category": "其他事项支持", "name": "isv产品上架测试", "description": "完成ISV产品价格测试并输出测试报告", "status": "已完成", "startTime": "2026-04-15T11:18", "completionTime": "", "summary": "", "timeSpent": 8, "progress": 100, "notes": "", "updatedAt": "2026-04-21T08:37:04.199Z"}, {"id": "cc4e-2dc9", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "战略客户经营计划模板整体内容审阅纠错", "description": "协助秦刚检查战略客户经营计划模板内容是否完整、错别字等", "status": "已完成", "startTime": "2026-04-15T11:19", "completionTime": "", "summary": "优化后的战略客户经营计划模板", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-04-15T03:21:20.894Z"}, {"id": "c090-258a", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "2025年战略客户调研问卷分析", "description": "对2025年的战略客户调查结果进行分析，分别输出对研发侧沟通、对客户成功及技术部门沟通、对领导层汇报的报告", "status": "已完成", "startTime": "2026-04-15T15:09", "completionTime": "", "summary": "", "timeSpent": 10, "progress": 100, "notes": "", "updatedAt": "2026-04-24T07:34:04.079Z"}, {"id": "e7ca-d2eb", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "战略客户新闻动态简报的周报agent", "description": "针对战略客户新闻动态简报的周报agent\n重大人事变动情况\n客户对外的重大项目中标及签约情况\n客户负面舆情\n大额投融资情况\n客户自身数字化项目招投标/建设动态\n金蝶销售机会分析等", "status": "进行中", "startTime": "2026-04-15T15:10", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 30, "notes": "", "updatedAt": "2026-04-24T07:31:27.355Z"}, {"id": "9224-c0ac", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "战略客户年度经营计划及经营指标下单沟通会议通知", "description": "找薛双参考下机构4月线上业绩整改的会议通知及议程安排，同步准备一个对应的会议通知；\n我约了老马，争取下周内和所有的机构总完成线上沟通及指标下达", "status": "已完成", "startTime": "2026-04-15T15:15", "completionTime": "", "summary": "", "timeSpent": 3, "progress": 100, "notes": "", "updatedAt": "2026-05-07T01:50:58.708Z"}, {"id": "4fa4-c85e", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "61家战略客户经营数据整理及经营报告输出", "description": "基于火英发的数据， @王志丹 牵头整理下：25年留存下来的战略客户过去3年指标及实际产出和26年新增加的战略客户业绩承诺（含合同/考核收款/订阅收款）。", "status": "已完成", "startTime": "2026-04-15T16:06", "completionTime": "", "summary": "", "timeSpent": 30, "progress": 100, "notes": "", "updatedAt": "2026-04-24T07:30:12.497Z"}, {"id": "c305-a5fc", "department": "集团财务与国资事业部", "category": "客户接待", "name": "客户接待-浙江交投", "description": "", "status": "已完成", "startTime": "2026-04-21T18:16", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-04-21T08:24:45.954Z"}, {"id": "e962-43b8", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "2025年年度优秀激励发放", "description": "优秀激励发放通知及逐一发放给员工", "status": "已完成", "startTime": "2026-04-17T11:04", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-04-17T03:05:24.777Z"}, {"id": "4621-fcd0", "department": "建筑房地产事业部", "category": "CRU-行业经营管理", "name": "季度例会报告撰写", "description": "报告相关数据收集、整理、分析、报告撰写、修改等", "status": "已完成", "startTime": "2026-04-06T11:06", "completionTime": "", "summary": "", "timeSpent": 40, "progress": 100, "notes": "", "updatedAt": "2026-05-07T07:28:33.075Z"}, {"id": "0321-a349", "department": "建筑房地产事业部", "category": "CRU-体系化建设", "name": "知识地图权限设置", "description": "", "status": "未开始", "startTime": "2026-04-20T10:39", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-04-20T02:39:45.348Z"}, {"id": "54d6-355c", "department": "集团财务与国资事业部", "category": "全国工时减免", "name": "2月全国工时减免处理", "description": "", "status": "已完成", "startTime": "2026-04-20T13:38", "completionTime": "", "summary": "", "timeSpent": 30, "progress": 100, "notes": "", "updatedAt": "2026-05-07T01:44:11.334Z"}, {"id": "8f7d-9cc7", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "建筑房地产共享资料库建立", "description": "", "status": "进行中", "startTime": "2026-04-20T17:47", "completionTime": "", "summary": "", "timeSpent": 3, "progress": 50, "notes": "", "updatedAt": "2026-05-07T01:43:12.649Z"}, {"id": "7ad7-04d3", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "建筑房地产2026年岗位KPI指标库建立", "description": "", "status": "已完成", "startTime": "2026-04-20T17:48", "completionTime": "", "summary": "", "timeSpent": 0.5, "progress": 100, "notes": "", "updatedAt": "2026-04-20T09:50:25.623Z"}, {"id": "51cc-faa2", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "组织参加事业部季度例会并准备茶歇", "description": "", "status": "已完成", "startTime": "2026-04-20T17:49", "completionTime": "", "summary": "", "timeSpent": 5, "progress": 100, "notes": "", "updatedAt": "2026-04-20T09:49:58.558Z"}, {"id": "d5bf-b7ab", "department": "建筑房地产事业部", "category": "CRU-会议管理", "name": "组织建房周例会、周度业绩数据整理、输出会议纪要", "description": "", "status": "已完成", "startTime": "2026-04-20T17:50", "completionTime": "", "summary": "会议纪要、周度经营报告", "timeSpent": 8, "progress": 100, "notes": "", "updatedAt": "2026-04-22T07:44:30.663Z"}, {"id": "3e41-acaf", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "建筑房地产的AI skill收集，按岗位，哪些是0-1的分类，形成AI反思表", "description": "", "status": "已取消", "startTime": "2026-04-20T18:09", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-04-27T13:54:38.533Z"}, {"id": "6815-a369", "department": "集团财务与国资事业部", "category": "其他事项支持", "name": "星瀚产品调研问卷设计及问卷分析", "description": "", "status": "已完成", "startTime": "2026-04-20T19:27", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-04-21T08:25:02.564Z"}, {"id": "4b01-9c65", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "战略客户系统权限沟通申请", "description": "", "status": "已完成", "startTime": "2026-04-22T15:26", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-04-24T06:26:58.037Z"}, {"id": "5d7b-d1b6", "department": "建筑房地产事业部", "category": "CRU-会议管理", "name": "51休假数据收集", "description": "", "status": "已完成", "startTime": "2026-04-23T20:44", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-04-24T06:26:52.426Z"}, {"id": "46fc-c4fa", "department": "集团财务与国资事业部", "category": "阵地战经营", "name": "2026年经营中心解决方案顾问售前支持数据整理", "description": "", "status": "已完成", "startTime": "2026-04-23T20:45", "completionTime": "", "summary": "", "timeSpent": 6, "progress": 100, "notes": "", "updatedAt": "2026-04-23T12:47:19.863Z"}, {"id": "7ddd-8d3f", "department": "集团财务与国资事业部", "category": "其他事项支持", "name": "参加质量管理会议", "description": "", "status": "已完成", "startTime": "2026-04-24T15:31", "completionTime": "", "summary": "", "timeSpent": 3, "progress": 100, "notes": "", "updatedAt": "2026-04-24T07:32:25.319Z"}, {"id": "6e9d-0615", "department": "集团财务与国资事业部", "category": "财务与国资-部门管理相关", "name": "集团财务与国资事业部月度报告撰写", "description": "", "status": "已完成", "startTime": "2026-04-24T15:34", "completionTime": "", "summary": "", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-05-07T01:43:37.728Z"}, {"id": "c10c-e204", "department": "集团财务与国资事业部", "category": "财务与国资-部门管理相关", "name": "日常办公系统权限梳理", "description": "", "status": "已完成", "startTime": "2026-04-01T15:35", "completionTime": "", "summary": "", "timeSpent": 3, "progress": 100, "notes": "", "updatedAt": "2026-04-24T07:35:42.544Z"}, {"id": "83a9-08c2", "department": "集团财务与国资事业部", "category": "阵地战经营", "name": "AI超级套件签约、收款、商机数据整理", "description": "", "status": "已完成", "startTime": "2026-04-27T10:57", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-04-27T02:57:56.687Z"}, {"id": "8064-ed29", "department": "集团财务与国资事业部", "category": "阵地战经营", "name": "阵地战百万回款状态跟进", "description": "对4月阵地战百万预算进行穿透，输出穿透结果", "status": "已完成", "startTime": "2026-04-27T18:11", "completionTime": "", "summary": "", "timeSpent": 2.5, "progress": 100, "notes": "", "updatedAt": "2026-04-27T10:13:27.865Z"}, {"id": "83ef-b170", "department": "建筑房地产事业部", "category": "CRU-会议管理", "name": "组织参加CRU经理人周例会并输出会议待办事项", "description": "", "status": "已完成", "startTime": "2026-04-27T21:53", "completionTime": "", "summary": "", "timeSpent": 3.5, "progress": 100, "notes": "", "updatedAt": "2026-05-07T01:59:52.139Z"}, {"id": "7aeb-b7db", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "战略客户PPT数据校验", "description": "", "status": "已完成", "startTime": "2026-04-28T14:58", "completionTime": "", "summary": "", "timeSpent": 3, "progress": 100, "notes": "", "updatedAt": "2026-04-28T06:59:19.458Z"}, {"id": "822f-4802", "department": "集团财务与国资事业部", "category": "交付直签", "name": "参加交付直签伙伴闭门会议交流会", "description": "了解闭门会议相关背景", "status": "已完成", "startTime": "2026-04-28T09:55", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-05-07T01:56:18.507Z"}, {"id": "cd4a-6850", "department": "集团财务与国资事业部", "category": "交付直签", "name": "交付直签伙伴闭门会议邀请函", "description": "", "status": "已完成", "startTime": "2026-04-30T09:56", "completionTime": "", "summary": "完成邀请函及报名问卷制作", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-05-07T01:58:26.380Z"}, {"id": "25fa-b8a4", "department": "集团财务与国资事业部", "category": "交付直签", "name": "交付直签伙伴闭门会议整体活动策划、执行、落地", "description": "", "status": "已完成", "startTime": "2026-05-06T09:58", "completionTime": "", "summary": "", "timeSpent": 60, "progress": 100, "notes": "", "updatedAt": "2026-05-29T01:58:10.939Z"}, {"id": "bca9-976f", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "月度异常工时处理", "description": "", "status": "已完成", "startTime": "2026-05-06T10:01", "completionTime": "", "summary": "完成月度异常工时盘查及消息同步，申请异常补录权限开放、督促相关人员完成补录", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-05-12T02:35:34.432Z"}, {"id": "db17-c231", "department": "集团财务与国资事业部", "category": "财务与国资-部门管理相关", "name": "月度异常工时处理", "description": "", "status": "已完成", "startTime": "2026-05-07T10:01", "completionTime": "", "summary": "完成月度异常工时盘查及消息同步，申请异常补录权限开放、督促相关人员完成补录", "timeSpent": 3, "progress": 100, "notes": "", "updatedAt": "2026-05-12T02:36:09.401Z"}, {"id": "2721-e8e7", "department": "集团财务与国资事业部", "category": "阵地战经营", "name": "老客户历史签约模块匹配", "description": "", "status": "已完成", "startTime": "2026-05-07T14:00", "completionTime": "", "summary": "", "timeSpent": 0.2, "progress": 100, "notes": "", "updatedAt": "2026-05-07T08:41:13.224Z"}, {"id": "6466-740a", "department": "集团财务与国资事业部", "category": "财务与国资-部门管理相关", "name": "月度工作总结报告撰写", "description": "", "status": "已完成", "startTime": "2026-05-07T14:03", "completionTime": "", "summary": "", "timeSpent": 3, "progress": 100, "notes": "", "updatedAt": "2026-05-07T08:40:41.053Z"}, {"id": "8e61-a9eb", "department": "建筑房地产事业部", "category": "CRU-行业经营管理", "name": "行业客户百万级订阅客户名单核验", "description": "", "status": "已完成", "startTime": "2026-05-07T15:29", "completionTime": "", "summary": "", "timeSpent": 2, "progress": 100, "notes": "", "updatedAt": "2026-05-14T08:48:05.704Z"}, {"id": "135b-0dde", "department": "建筑房地产事业部", "category": "CRU-行业经营管理", "name": "月度经营总结报告看板设计及优化", "description": "月度行业经营数据、事业部经营数据、员工执行力数据整理、分析、生成月度总结报告", "status": "进行中", "startTime": "2026-05-07T16:41", "completionTime": "", "summary": "", "timeSpent": 8, "progress": 0, "notes": "", "updatedAt": "2026-05-12T02:54:47.374Z"}, {"id": "bc63-423d", "department": "集团财务与国资事业部", "category": "其他事项支持", "name": "旗舰版“无版本升级”调研问卷", "description": "制作调研问卷，与机构逐一沟通填写，并对问卷结果进行分析", "status": "已完成", "startTime": "2026-05-08T16:53", "completionTime": "", "summary": "", "timeSpent": 6, "progress": 100, "notes": "", "updatedAt": "2026-05-12T02:38:40.560Z"}, {"id": "5d5e-f558", "department": "集团财务与国资事业部", "category": "交付直签", "name": "5月21日开一个交付直签管理办法的会议", "description": "", "status": "未开始", "startTime": "2026-05-11T20:59", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-11T13:00:05.923Z"}, {"id": "93b8-432e", "department": "建筑房地产事业部", "category": "CRU-行业经营管理", "name": "系统报表搭建", "description": "已完成初版数据搭建", "status": "已完成", "startTime": "2026-05-12T10:36", "completionTime": "", "summary": "", "timeSpent": 6, "progress": 100, "notes": "", "updatedAt": "2026-05-12T02:37:55.995Z"}, {"id": "1dad-48a3", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "月度执行力数据更新及看板优化", "description": "", "status": "进行中", "startTime": "2026-05-12T10:39", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-12T02:47:08.000Z"}, {"id": "52e8-cf61", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "月度评优事宜", "description": "", "status": "未开始", "startTime": "2026-05-12T10:39", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-12T02:39:36.582Z"}, {"id": "4eea-a808", "department": "建筑房地产事业部", "category": "CRU-行业经营管理", "name": "KBC系统数据校验核对", "description": "", "status": "未开始", "startTime": "2026-05-12T10:39", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-12T02:40:52.556Z"}, {"id": "4cbd-e22e", "department": "集团财务与国资事业部", "category": "客户接待", "name": "客户接待-公元股份-2026/05/15", "description": "", "status": "已完成", "startTime": "2026-05-12T10:42", "completionTime": "", "summary": "", "timeSpent": 0.5, "progress": 100, "notes": "", "updatedAt": "2026-05-15T09:29:04.490Z"}, {"id": "baf7-2ea0", "department": "建筑房地产事业部", "category": "CRU-会议管理", "name": "组织参加CRU经营周度/月度例会并输出会议纪要", "description": "组织参加会议并输出会议纪要", "status": "已完成", "startTime": "2026-05-12T10:52", "completionTime": "", "summary": "", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-05-18T02:11:58.679Z"}, {"id": "ea30-7072", "department": "集团财务与国资事业部", "category": "阵地战经营", "name": "参加售前管理制度讨论会议", "description": "", "status": "已完成", "startTime": "2026-05-11T10:53", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-05-12T02:54:15.394Z"}, {"id": "90c5-d482", "department": "集团财务与国资事业部", "category": "客户接待", "name": "广西柳钢集团客户接待-0519", "description": "", "status": "进行中", "startTime": "2026-05-13T16:43", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-13T08:44:25.554Z"}, {"id": "5ff4-fcda", "department": "集团财务与国资事业部", "category": "客户接待", "name": "广州粤检集团客户接待-0515", "description": "", "status": "已完成", "startTime": "2026-05-14T10:18", "completionTime": "", "summary": "", "timeSpent": 1, "progress": 100, "notes": "", "updatedAt": "2026-05-15T09:28:46.396Z"}, {"id": "6998-7d14", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "Q3行业产品续签续费&内部事项支持", "description": "", "status": "已完成", "startTime": "2026-05-14T10:45", "completionTime": "", "summary": "", "timeSpent": 0.5, "progress": 100, "notes": "", "updatedAt": "2026-05-14T02:46:41.684Z"}, {"id": "5a05-558e", "department": "建筑房地产事业部", "category": "CRU-行业经营管理", "name": "建筑房地产行业2026续签续费清单整理", "description": "", "status": "已完成", "startTime": "2026-05-14T16:46", "completionTime": "", "summary": "", "timeSpent": 4, "progress": 100, "notes": "", "updatedAt": "2026-05-14T08:47:16.441Z"}, {"id": "1e9c-a553", "department": "建筑房地产事业部", "category": "CRU-行业经营管理", "name": "行业产品交付项目梳理", "description": "", "status": "未开始", "startTime": "2026-05-15T17:29", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-15T09:30:11.446Z"}, {"id": "a3a5-45aa", "department": "集团财务与国资事业部", "category": "全国工时减免", "name": "3月全国工时减免数据梳理", "description": "", "status": "未开始", "startTime": "2026-05-15T17:30", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-15T09:30:29.721Z"}, {"id": "cfc1-10f6", "department": "建筑房地产事业部", "category": "CRU-部门管理相关", "name": "4、5月生日券发放", "description": "", "status": "已完成", "startTime": "2026-05-18T10:06", "completionTime": "", "summary": "", "timeSpent": 0.3, "progress": 100, "notes": "", "updatedAt": "2026-05-18T02:08:53.603Z"}, {"id": "f1b2-e8c7", "department": "集团财务与国资事业部", "category": "战略客户经营", "name": "战略客户年度经营指标导入", "description": "", "status": "未开始", "startTime": "2026-05-29T09:39", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-29T01:39:44.447Z"}, {"id": "1827-50e4", "department": "集团财务与国资事业部", "category": "客户接待", "name": "老凤祥客户接待-6月1日下午", "description": "", "status": "未开始", "startTime": "2026-05-29T09:39", "completionTime": "", "summary": "", "timeSpent": 0, "progress": 0, "notes": "", "updatedAt": "2026-05-29T01:41:42.209Z"}],
+      settings: {"userName": "", "userTitle": "", "departments": ["建筑房地产事业部", "集团财务与国资事业部"], "categories": ["阵地战经营", "战略客户经营", "全国工时减免", "解决方案业绩分配相关", "客户接待", "其他事项支持", "CRU-行业经营管理", "CRU-运营管理", "CRU-会议管理", "CRU-部门管理相关", "CRU-体系化建设", "财务与国资-部门管理相关", "财务与国资-体系化建设", "交付直签"]},
+      viewMode: 'all',
+      filterDate: `${y}-${m}-${d}`,
+      filterWeek: `${y}-W${wn}`,
+      filterMonth: `${y}-${m}`,
+      filterStatus: '',
+      filterDept: '',
+      searchText: '',
+      currentPage: 1,
+      pageSize: 15,
+      sortKey: '',
+      sortDir: '',
+      colWidths: {"idx": 50, "name": 208, "department": 136, "category": 147, "status": 129, "progress": 120, "startTime": 110, "timeSpent": 70, "actions": 110},
+      resizing: null,
+      columns: [
+        { key:'idx', label:'#', sortable:false },
+        { key:'name', label:'事项名称', sortable:true },
+        { key:'department', label:'归属部门', sortable:true },
+        { key:'category', label:'归属类型', sortable:true },
+        { key:'status', label:'状态', sortable:true },
+        { key:'progress', label:'进度', sortable:true },
+        { key:'startTime', label:'开始时间', sortable:true },
+        { key:'timeSpent', label:'耗时', sortable:true },
+        { key:'actions', label:'操作', sortable:false },
+      ],
+      inlineEditing: { id:'', field:'' },
+      showModal: false,
+      editingTask: {},
+      showDeleteConfirm: false,
+      deletingTask: null,
+      showClearConfirm: false,
+      reportType: 'monthly',
+      reportWeek: `${y}-W${wn}`,
+      reportMonth: `${y}-${m}`,
+      reportYear: y,
+      reportDeptFilter: '',
+      reportGenerated: false,
+      reportData: {},
+      charts: [],
+      newDept: '',
+      newCat: '',
+      autoBackup: { enabled:false, folderName:'', day:5 },
+      syncStatus: 'offline',
+      githubConfig: { username:'', token:'', repo:'my-work' },
+      lastSyncTime: '',
+      backupDirHandle: null,
+      lastAutoBackupDate: '',
+      toast: { show:false, msg:'', type:'success' },
+      toastTimer: null,
+    };
+  },
+  computed: {
+    statusOptions() { return ['未开始','进行中','已完成','已暂停','已取消']; },
+    viewLabel() {
+      if (this.viewMode === 'day') return '当日';
+      if (this.viewMode === 'week') return '本周';
+      if (this.viewMode === 'month') return '本月';
+      return '';
+    },
+    filteredTasks() {
+      let list = [...this.tasks];
+      if (this.viewMode === 'day' && this.filterDate) {
+        const ds = this.filterDate;
+        list = list.filter(t => t.startTime && t.startTime.substring(0,10) === ds);
+      } else if (this.viewMode === 'week' && this.filterWeek) {
+        const [s, e] = getWeekRange(this.filterWeek);
+        if (s && e) list = list.filter(t => { if (!t.startTime) return false; const td = new Date(t.startTime); return td >= s && td <= e; });
+      } else if (this.viewMode === 'month' && this.filterMonth) {
+        const [s, e] = getMonthRange(this.filterMonth);
+        if (s && e) list = list.filter(t => { if (!t.startTime) return false; const td = new Date(t.startTime); return td >= s && td <= e; });
+      }
+      if (this.filterStatus) list = list.filter(t => t.status === this.filterStatus);
+      if (this.filterDept) list = list.filter(t => t.department === this.filterDept);
+      if (this.searchText) {
+        const kw = this.searchText.toLowerCase();
+        list = list.filter(t => t.name.toLowerCase().includes(kw) || (t.description||'').toLowerCase().includes(kw));
+      }
+      if (this.sortKey && this.sortDir) {
+        const key = this.sortKey;
+        const dir = this.sortDir === 'asc' ? 1 : -1;
+        list.sort((a, b) => {
+          let va = a[key], vb = b[key];
+          if (va == null) va = '';
+          if (vb == null) vb = '';
+          if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+          return String(va).localeCompare(String(vb), 'zh-CN') * dir;
+        });
+      } else {
+        list.sort((a,b) => (b.startTime||'').localeCompare(a.startTime||''));
+      }
+      return list;
+    },
+    totalPages() { return Math.max(1, Math.ceil(this.filteredTasks.length / this.pageSize)); },
+    paginatedTasks() {
+      const s = (this.currentPage-1)*this.pageSize;
+      return this.filteredTasks.slice(s, s+this.pageSize);
+    },
+    visiblePages() {
+      const pages = [];
+      let start = Math.max(1, this.currentPage - 2);
+      let end = Math.min(this.totalPages, start + 4);
+      start = Math.max(1, end - 4);
+      for (let i=start; i<=end; i++) pages.push(i);
+      return pages;
+    },
+    totalHours() {
+      return this.filteredTasks.reduce((s,t) => s + (t.timeSpent||0), 0).toFixed(1).replace(/\.0$/,'');
+    },
+    lastUpdated() {
+      if (!this.tasks.length) return '暂无数据';
+      const dates = this.tasks.map(t => t.updatedAt || t.startTime || '').filter(Boolean);
+      if (!dates.length) return '暂无数据';
+      return this.formatDate(dates.sort().pop());
+    }
+  },
+  watch: {
+    viewMode() { this.currentPage = 1; },
+    filterDate() { this.currentPage = 1; },
+    filterWeek() { this.currentPage = 1; },
+    filterMonth() { this.currentPage = 1; },
+    filterStatus() { this.currentPage = 1; },
+    filterDept() { this.currentPage = 1; },
+    searchText() { this.currentPage = 1; },
+    'settings': { handler() { this.saveSettings(); this.debouncedSyncToGithub(); }, deep: true }
+  },
+  mounted() {
+    this.loadGithubConfig();
+    this.loadData();
+    this.restoreBackupHandle();
+    this.lastSyncTime = localStorage.getItem('work_manager_last_sync') || '';
+    if (this.githubConfig.token) this.updateSyncStatus('offline');
+    document.addEventListener('mousemove', this.onResize);
+    document.addEventListener('mouseup', this.stopResize);
+  },
+  beforeUnmount() {
+    document.removeEventListener('mousemove', this.onResize);
+    document.removeEventListener('mouseup', this.stopResize);
+  },
+  methods: {
+    showToast(msg, type='success') {
+      clearTimeout(this.toastTimer);
+      this.toast = { show:true, msg, type };
+      this.toastTimer = setTimeout(() => { this.toast.show = false; }, 2500);
+    },
+
+    loadData() {
+      try {
+        const td = localStorage.getItem(STORAGE_KEY);
+        if (td !== null) {
+          this.tasks = JSON.parse(td);
+        } else {
+          this.saveTasks();
+        }
+        const sd = localStorage.getItem(SETTINGS_KEY);
+        if (sd !== null) {
+          this.settings = { ...defaultSettings, ...JSON.parse(sd) };
+        } else {
+          this.saveSettings();
+        }
+        const cw = localStorage.getItem(COLWIDTH_KEY);
+        if (cw !== null) {
+          this.colWidths = { ...defaultColWidths, ...JSON.parse(cw) };
+        } else {
+          this.saveColWidths();
+        }
+        this.loadBackupConfig();
+      } catch(e) { console.error('Load error', e); }
+    },
+    saveTasks() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.tasks)); } catch(e) {}
+      this.debouncedSyncToGithub();
+    },
+    saveSettings() {
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings)); } catch(e) {}
+    },
+    saveColWidths() {
+      try { localStorage.setItem(COLWIDTH_KEY, JSON.stringify(this.colWidths)); } catch(e) {}
+    },
+
+    // Auto Backup
+    async pickBackupFolder() {
+      if (!window.showDirectoryPicker) { alert('当前浏览器不支持选择文件夹功能。\n请使用 Chrome 或 Edge 浏览器（86+版本）。'); return; }
+      try {
+        const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        this.backupDirHandle = handle;
+        this.autoBackup.enabled = true;
+        this.autoBackup.folderName = handle.name;
+        this.saveBackupConfig();
+        await this.storeBackupHandle(handle);
+        this.showToast('备份文件夹设置成功：' + handle.name);
+      } catch(e) { if (e.name !== 'AbortError') { alert('选择文件夹失败：' + e.message); } }
+    },
+    async storeBackupHandle(handle) {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('WorkManagerBackup', 1);
+        req.onupgradeneeded = (e) => { e.target.result.createObjectStore('handles'); };
+        req.onsuccess = (e) => { const db = e.target.result; const tx = db.transaction('handles', 'readwrite'); tx.objectStore('handles').put(handle, 'backupDir'); tx.oncomplete = () => { db.close(); resolve(); }; tx.onerror = () => { db.close(); reject(tx.error); }; };
+        req.onerror = () => reject(req.error);
+      });
+    },
+    async restoreBackupHandle() {
+      try {
+        const handle = await new Promise((resolve, reject) => {
+          const req = indexedDB.open('WorkManagerBackup', 1);
+          req.onupgradeneeded = (e) => { e.target.result.createObjectStore('handles'); };
+          req.onsuccess = (e) => { const db = e.target.result; const tx = db.transaction('handles', 'readonly'); const getReq = tx.objectStore('handles').get('backupDir'); getReq.onsuccess = () => { db.close(); resolve(getReq.result); }; getReq.onerror = () => { db.close(); resolve(null); }; };
+          req.onerror = () => resolve(null);
+        });
+        if (handle) {
+          const perm = await handle.queryPermission({ mode: 'readwrite' });
+          if (perm === 'granted') { this.backupDirHandle = handle; this.autoBackup.folderName = handle.name; this.checkAutoBackup(); }
+          else { this.backupDirHandle = handle; this.autoBackup.folderName = handle.name; }
+        }
+      } catch(e) { console.log('Restore handle:', e); }
+    },
+    saveBackupConfig() {
+      try { localStorage.setItem('work_manager_autobackup', JSON.stringify({ enabled: this.autoBackup.enabled, folderName: this.autoBackup.folderName, day: this.autoBackup.day, lastDate: this.lastAutoBackupDate })); } catch(e) {}
+    },
+    loadBackupConfig() {
+      try { const raw = localStorage.getItem('work_manager_autobackup'); if (raw) { const cfg = JSON.parse(raw); this.autoBackup.enabled = cfg.enabled || false; this.autoBackup.folderName = cfg.folderName || ''; this.autoBackup.day = cfg.day != null ? cfg.day : 5; this.lastAutoBackupDate = cfg.lastDate || ''; } } catch(e) {}
+    },
+    async checkAutoBackup() {
+      this.loadBackupConfig();
+      if (!this.autoBackup.enabled || !this.backupDirHandle) return;
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      if (now.getDay() === this.autoBackup.day && this.lastAutoBackupDate !== today) { await this.doAutoBackup(today); }
+    },
+    async doAutoBackup(dateStr) {
+      if (!this.backupDirHandle) return;
+      try {
+        const perm = await this.backupDirHandle.requestPermission({ mode: 'readwrite' });
+        if (perm !== 'granted') { this.showToast('备份失败：文件夹访问权限被拒绝', 'info'); return; }
+        const data = { version:2, exportedAt:new Date().toISOString(), tasks:this.tasks, settings:this.settings };
+        const fileName = `工作管理备份_${dateStr}.json`;
+        const fileHandle = await this.backupDirHandle.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(data, null, 2));
+        await writable.close();
+        this.lastAutoBackupDate = dateStr;
+        this.saveBackupConfig();
+        this.showToast('已自动备份到：' + this.autoBackup.folderName + '/' + fileName);
+      } catch(e) { this.showToast('自动备份失败：' + e.message, 'info'); }
+    },
+    async doManualBackupToFolder() {
+      if (!this.backupDirHandle) { await this.pickBackupFolder(); if (!this.backupDirHandle) return; }
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      const timeStr = `${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+      try {
+        const perm = await this.backupDirHandle.requestPermission({ mode: 'readwrite' });
+        if (perm !== 'granted') { this.showToast('文件夹访问权限被拒绝', 'info'); return; }
+        const data = { version:2, exportedAt:now.toISOString(), tasks:this.tasks, settings:this.settings };
+        const fileName = `工作管理备份_${dateStr}_${timeStr}.json`;
+        const fileHandle = await this.backupDirHandle.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(data, null, 2));
+        await writable.close();
+        this.showToast('已备份到：' + this.autoBackup.folderName + '/' + fileName);
+      } catch(e) { this.showToast('备份失败：' + e.message, 'info'); }
+    },
+    disableAutoBackup() {
+      this.autoBackup.enabled = false; this.autoBackup.folderName = ''; this.backupDirHandle = null; this.saveBackupConfig();
+      try { const req = indexedDB.open('WorkManagerBackup', 1); req.onsuccess = (e) => { const db = e.target.result; const tx = db.transaction('handles', 'readwrite'); tx.objectStore('handles').delete('backupDir'); tx.oncomplete = () => db.close(); }; } catch(e) {}
+      this.showToast('已关闭自动备份');
+    },
+    getBackupDayLabel(day) { return { 0:'周日',1:'周一',2:'周二',3:'周三',4:'周四',5:'周五',6:'周六' }[day] || '周五'; },
+
+    // Column Resize
+    startResize(e, key) { this.resizing = { key, startX: e.clientX, startWidth: this.colWidths[key] || 100 }; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; },
+    onResize(e) { if (!this.resizing) return; const diff = e.clientX - this.resizing.startX; const newWidth = Math.max(40, this.resizing.startWidth + diff); this.colWidths[this.resizing.key] = newWidth; },
+    stopResize() { if (this.resizing) { this.resizing = null; document.body.style.cursor = ''; document.body.style.userSelect = ''; this.saveColWidths(); } },
+
+    // Sorting
+    toggleSort(key) { const col = this.columns.find(c => c.key === key); if (!col || !col.sortable) return; if (this.sortKey === key) { if (this.sortDir === 'asc') this.sortDir = 'desc'; else if (this.sortDir === 'desc') { this.sortKey = ''; this.sortDir = ''; } else this.sortDir = 'asc'; } else { this.sortKey = key; this.sortDir = 'asc'; } },
+
+    // Inline Editing
+    startInlineEdit(task, field) { this.inlineEditing = { id: task.id, field }; this.$nextTick(() => { const inp = this.$refs.inlineInput; if (inp) { const el = Array.isArray(inp) ? inp[0] : inp; if (el) el.focus(); } }); },
+    finishInlineEdit(task, field, value) {
+      const idx = this.tasks.findIndex(t => t.id === task.id);
+      if (idx < 0) { this.cancelInlineEdit(); return; }
+      const t = { ...this.tasks[idx] };
+      t[field] = value;
+      t.updatedAt = new Date().toISOString();
+      if (field === 'status' && value === '已完成' && t.progress < 100) t.progress = 100;
+      this.tasks.splice(idx, 1, t);
+      this.saveTasks();
+      this.cancelInlineEdit();
+      this.showToast('已更新');
+    },
+    cancelInlineEdit() { this.inlineEditing = { id:'', field:'' }; },
+
+    // Status
+    statusClass(s) { return {'未开始':'badge-pending','进行中':'badge-progress','已完成':'badge-done','已暂停':'badge-paused','已取消':'badge-cancelled'}[s] || ''; },
+    filteredByStatus(s) { return this.filteredTasks.filter(t => t.status === s); },
+
+    // Format
+    formatDate(d) { if (!d) return '-'; const dt = new Date(d); if (isNaN(dt)) return d; return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; },
+    formatDateTime(d) { if (!d) return '-'; const dt = new Date(d); if (isNaN(dt)) return d; return `${this.formatDate(d)} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`; },
+
+    // Task CRUD
+    emptyTask() { const now = new Date(); const local = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16); return { id:'', department:'', category:'', name:'', description:'', status:'未开始', startTime:local, completionTime:'', summary:'', timeSpent:0, progress:0, notes:'' }; },
+    openAddModal() { this.editingTask = this.emptyTask(); this.showModal = true; },
+    openEditModal(task) { this.editingTask = JSON.parse(JSON.stringify(task)); this.showModal = true; },
+    saveTask() {
+      if (!this.editingTask.name.trim()) { alert('请输入事项名称'); return; }
+      const isNew = !this.editingTask.id;
+      const t = { ...this.editingTask, updatedAt: new Date().toISOString() };
+      if (t.status === '已完成' && t.progress < 100) t.progress = 100;
+      if (!isNew) { const idx = this.tasks.findIndex(x => x.id === t.id); if (idx >= 0) this.tasks.splice(idx, 1, t); }
+      else { t.id = uuid(); this.tasks.push(t); }
+      this.saveTasks();
+      this.showModal = false;
+      this.showToast(isNew ? '已创建' : '已保存');
+    },
+    confirmDelete(task) { this.deletingTask = task; this.showDeleteConfirm = true; },
+    doDelete() { this.tasks = this.tasks.filter(t => t.id !== this.deletingTask.id); this.saveTasks(); this.showDeleteConfirm = false; this.showToast('已删除'); },
+
+    // Settings
+    addDept() { const v = this.newDept.trim(); if (v && !this.settings.departments.includes(v)) { this.settings.departments.push(v); this.saveSettings(); } this.newDept = ''; },
+    addCat() { const v = this.newCat.trim(); if (v && !this.settings.categories.includes(v)) { this.settings.categories.push(v); this.saveSettings(); } this.newCat = ''; },
+
+    // Import/Export
+    exportData() {
+      const data = { version:2, exportedAt:new Date().toISOString(), tasks:this.tasks, settings:this.settings };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = `工作管理数据_${this.formatDate(new Date())}.json`;
+      a.click(); URL.revokeObjectURL(url);
+    },
+    importData(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (data.tasks && Array.isArray(data.tasks)) {
+            const overwrite = confirm(`即将导入 ${data.tasks.length} 条数据。\n\n点击"确定"替换现有数据，点击"取消"放弃操作。`);
+            if (overwrite) {
+              this.tasks = data.tasks;
+              if (data.settings) this.settings = { ...defaultSettings, ...data.settings };
+              if (data.colwidths) { this.colWidths = data.colwidths; this.saveColWidths(); }
+              this.saveTasks(); this.saveSettings(); this.showToast('导入成功！');
+            }
+          } else { alert('无效的数据文件'); }
+        } catch(err) { alert('文件解析失败：' + err.message); }
+      };
+      reader.readAsText(file); e.target.value = '';
+    },
+    clearAll() { this.tasks = []; this.saveTasks(); this.showClearConfirm = false; },
+
+    // Report
+    getReportTasks() {
+      let start, end;
+      if (this.reportType === 'weekly') { [start, end] = getWeekRange(this.reportWeek); }
+      else if (this.reportType === 'monthly') { [start, end] = getMonthRange(this.reportMonth); }
+      else { [start, end] = getYearRange(this.reportYear); }
+      if (!start || !end) return [];
+      let list = this.tasks.filter(t => { if (!t.startTime) return false; const td = new Date(t.startTime); return td >= start && td <= end; });
+      if (this.reportDeptFilter) { list = list.filter(t => t.department === this.reportDeptFilter); }
+      return list;
+    },
+
+    analyzeHighlightsAndIssues(tasks, completed, inProgress, pending, rate, totalHours, deptBreakdown, catMap) {
+      const highlights = [];
+      const issues = [];
+      const periodLabel = this.reportType==='weekly'?'本周':this.reportType==='monthly'?'本月':'本年度';
+      let highlightsSummary = '';
+
+      // === 全局性分析 ===
+      const avgHoursPerTask = tasks.length ? (totalHours / tasks.length) : 0;
+      const completedHours = completed.reduce((s,t) => s+(t.timeSpent||0), 0);
+      const avgCompletedHours = completed.length ? (completedHours / completed.length) : 0;
+
+      // 分类完成率分析
+      const catStats = {};
+      tasks.forEach(t => {
+        const c = t.category || '未分类';
+        if (!catStats[c]) catStats[c] = { total:0, done:0, hours:0 };
+        catStats[c].total++;
+        if (t.status === '已完成') catStats[c].done++;
+        catStats[c].hours += (t.timeSpent||0);
+      });
+
+      // 部门效率分析
+      const deptEfficiency = deptBreakdown.map(d => ({
+        name: d.name, rate: d.rate, avgHours: d.total ? (d.hours/d.total) : 0
+      }));
+
+      // 生成整体性总结摘要
+      const totalCats = Object.keys(catStats).length;
+      const highRateCats = Object.entries(catStats).filter(([k,v]) => v.total >= 2 && v.done/v.total >= 0.8).map(([k]) => k);
+      const lowRateCats = Object.entries(catStats).filter(([k,v]) => v.total >= 2 && v.done/v.total < 0.5).map(([k]) => k);
+
+      highlightsSummary = `${periodLabel}工作整体呈现`;
+      if (rate >= 80) highlightsSummary += `"高效推进"态势，`;
+      else if (rate >= 60) highlightsSummary += `"稳步推进"态势，`;
+      else highlightsSummary += `"多线并行但推进偏慢"的态势，`;
+      highlightsSummary += `工作覆盖${totalCats}个业务类型，人均事项投入${avgHoursPerTask.toFixed(1)}h。`;
+      if (highRateCats.length) highlightsSummary += `其中${highRateCats.join('、')}等领域表现突出；`;
+      if (lowRateCats.length) highlightsSummary += `${lowRateCats.join('、')}等领域仍需加强推进力度。`;
+
+      // === 深入亮点分析 ===
+      // 1. 整体执行力
+      if (rate >= 85) {
+        highlights.push(`【执行力突出】${periodLabel}整体完成率达 ${rate}%，反映出良好的任务分解与执行能力，工作节奏把控到位。`);
+      } else if (rate >= 70) {
+        highlights.push(`【稳定推进】${periodLabel}完成率 ${rate}%，在多任务并行的情况下保持了较好的完成质量。`);
+      }
+
+      // 2. 工作饱和度与产出分析
+      if (totalHours >= 40 && this.reportType === 'weekly') {
+        highlights.push(`【高效产出】${periodLabel}累计投入 ${totalHours.toFixed(1)}h，工作饱和度高，单位时间产出率为 ${(completed.length / (totalHours/8)).toFixed(1)} 项/天。`);
+      } else if (totalHours >= 120 && this.reportType === 'monthly') {
+        highlights.push(`【高效产出】${periodLabel}累计投入 ${totalHours.toFixed(1)}h，日均工作 ${(totalHours/22).toFixed(1)}h，工作饱和度充足。`);
+      } else if (completed.length >= 5) {
+        highlights.push(`【量质并重】共交付 ${completed.length} 项工作成果，平均单项耗时 ${avgCompletedHours.toFixed(1)}h，体现了较好的效率与质量平衡。`);
+      }
+
+      // 3. 专业深度——高耗时重点攻坚
+      const highEffort = completed.filter(t => t.timeSpent >= 8).sort((a,b) => b.timeSpent - a.timeSpent);
+      if (highEffort.length >= 2) {
+        highlights.push(`【重点攻坚】成功交付 ${highEffort.length} 项高复杂度任务（单项≥8h），合计投入 ${highEffort.reduce((s,t)=>s+t.timeSpent,0)}h，涉及"${highEffort.slice(0,2).map(t=>t.name).join('"、"')}"等核心工作。`);
+      } else if (highEffort.length === 1) {
+        highlights.push(`【重点攻坚】完成重点高耗时任务"${highEffort[0].name}"（${highEffort[0].timeSpent}h），体现了持续攻坚的能力。`);
+      }
+
+      // 4. 跨领域协作
+      if (deptBreakdown.length >= 3 && !this.reportDeptFilter) {
+        const topDepts = deptBreakdown.slice(0,3).map(d => d.name).join('、');
+        highlights.push(`【跨域协作】工作横跨 ${deptBreakdown.length} 个部门/板块（${topDepts}等），展现了良好的跨部门资源协调与沟通能力。`);
+      }
+
+      // 5. 业务类型完成度
+      const fullCompleteCats = Object.entries(catStats).filter(([k,v]) => v.total >= 2 && v.done === v.total);
+      if (fullCompleteCats.length >= 2) {
+        highlights.push(`【分类全结】"${fullCompleteCats.map(([k])=>k).join('"、"')}"等 ${fullCompleteCats.length} 类工作事项全部按期完成，业务闭环能力强。`);
+      }
+
+      // 6. 文档化与知识沉淀
+      const withSummary = completed.filter(t => t.summary && t.summary.trim().length > 10);
+      if (withSummary.length >= Math.ceil(completed.length * 0.6) && withSummary.length >= 3) {
+        highlights.push(`【知识沉淀】${withSummary.length}/${completed.length} 项已完成工作记录了详细成果总结，文档化率 ${Math.round(withSummary.length/completed.length*100)}%，有效促进经验传承。`);
+      }
+
+      if (!highlights.length) {
+        highlights.push(`${periodLabel}累计处理 ${tasks.length} 项工作事项，投入工时 ${totalHours.toFixed(1)}h，工作保持正常运转。`);
+      }
+
+      // === 深入不足分析 ===
+      // 1. 完成率分析
+      if (rate < 50 && tasks.length >= 3) {
+        issues.push(`【完成率偏低】${periodLabel}完成率仅 ${rate}%（${completed.length}/${tasks.length}），显著低于健康水平（70%+），反映出任务规划过载或执行节奏失衡，建议下周期收紧任务承接量并强化优先级排序。`);
+      } else if (rate < 70 && rate >= 50 && tasks.length >= 3) {
+        issues.push(`【推进待提速】完成率 ${rate}% 尚有提升空间，${tasks.length - completed.length} 项未结事项中有 ${inProgress.length} 项仍在进行中，需关注是否存在资源瓶颈或任务阻塞。`);
+      }
+
+      // 2. 进度风险识别
+      const highRiskItems = inProgress.filter(t => t.progress < 30);
+      if (highRiskItems.length >= 2) {
+        issues.push(`【延期风险】${highRiskItems.length} 项进行中事项进度低于 30%（"${highRiskItems.slice(0,2).map(t=>t.name).join('"、"')}"），若不加快推进，下一周期将面临积压风险。建议明确阶段目标，拆解为可执行的小步快跑计划。`);
+      }
+
+      // 3. 任务积压分析
+      if (pending.length >= 3) {
+        const pausedCount = pending.filter(t => t.status === '已暂停').length;
+        const notStarted = pending.filter(t => t.status === '未开始').length;
+        let msg = `【任务积压】${pending.length} 项事项处于停滞状态`;
+        if (pausedCount) msg += `（其中 ${pausedCount} 项已暂停）`;
+        if (notStarted) msg += `（${notStarted} 项尚未启动）`;
+        msg += `，建议进行一次全面梳理：对已过期或无价值事项及时关闭，对优先级高的事项制定明确推进时间表。`;
+        issues.push(msg);
+      }
+
+      // 4. 时间管理问题
+      const noTime = tasks.filter(t => !t.timeSpent || t.timeSpent === 0);
+      if (noTime.length > tasks.length * 0.5 && tasks.length >= 4) {
+        issues.push(`【工时管理薄弱】${noTime.length}/${tasks.length} 项事项（${Math.round(noTime.length/tasks.length*100)}%）未记录耗时数据，导致无法准确评估工作负载和效率瓶颈。建议建立日常工时登记习惯，为后续资源分配和效率优化提供数据支撑。`);
+      }
+
+      // 5. 取消率分析
+      const cancelledCount = tasks.filter(t => t.status === '已取消').length;
+      if (cancelledCount >= 2) {
+        issues.push(`【需求稳定性】${cancelledCount} 项事项被取消（占比 ${Math.round(cancelledCount/tasks.length*100)}%），频繁取消可能反映需求评审不充分或外部优先级频繁变动，建议加强前期需求确认和变更管理流程。`);
+      }
+
+      // 6. 效率不均衡
+      if (lowRateCats.length >= 1 && tasks.length >= 5) {
+        const lowDetail = lowRateCats.map(c => `${c}(${catStats[c].done}/${catStats[c].total})`).join('、');
+        issues.push(`【领域短板】部分业务类型完成率偏低：${lowDetail}，建议分析是否存在技能短板、资源不足或外部依赖阻塞等根因。`);
+      }
+
+      if (!issues.length && rate < 100 && tasks.length > 0) {
+        issues.push(`尚有 ${tasks.length - completed.length} 项工作未完成，整体运转正常，建议在下一周期优先推进延续事项以确保闭环。`);
+      }
+
+      return { highlights, issues, highlightsSummary };
+    },
+
+    generateReport() {
+      const tasks = this.getReportTasks();
+      const completed = tasks.filter(t => t.status === '已完成');
+      const inProgress = tasks.filter(t => t.status === '进行中');
+      const pending = tasks.filter(t => t.status === '未开始' || t.status === '已暂停');
+      const totalHours = tasks.reduce((s,t) => s+(t.timeSpent||0), 0);
+      const rate = tasks.length ? Math.round(completed.length / tasks.length * 100) : 0;
+
+      let title, period;
+      const deptSuffix = this.reportDeptFilter ? ` - ${this.reportDeptFilter}` : '';
+      if (this.reportType === 'weekly') { const [s,e] = getWeekRange(this.reportWeek); const wn = this.reportWeek.split('-W')[1]; title = `第${parseInt(wn)}周工作报告${deptSuffix}`; period = `${this.formatDate(s)} ~ ${this.formatDate(e)}`; }
+      else if (this.reportType === 'monthly') { const [y,m] = this.reportMonth.split('-'); title = `${y}年${parseInt(m)}月工作报告${deptSuffix}`; period = `${y}年${parseInt(m)}月`; }
+      else { title = `${this.reportYear}年度工作总结${deptSuffix}`; period = `${this.reportYear}年1月 ~ ${this.reportYear}年12月`; }
+
+      // Department breakdown with hours percent
+      const deptMap = {};
+      tasks.forEach(t => { const d = t.department || '未分类'; if (!deptMap[d]) deptMap[d] = { name:d, total:0, completed:0, hours:0 }; deptMap[d].total++; if (t.status === '已完成') deptMap[d].completed++; deptMap[d].hours += (t.timeSpent||0); });
+      const deptBreakdown = Object.values(deptMap).map(d => ({
+        ...d, hours: parseFloat(d.hours.toFixed(1)),
+        rate: d.total ? Math.round(d.completed/d.total*100) : 0,
+        hoursPercent: totalHours ? Math.round(d.hours/totalHours*100) : 0
+      })).sort((a,b) => b.hours - a.hours);
+
+      // Category map
+      const catMap = {};
+      tasks.forEach(t => { const c = t.category || '未分类'; if (!catMap[c]) catMap[c] = 0; catMap[c]++; });
+      const catHoursMap = {};
+      tasks.forEach(t => { const c = t.category || '未分类'; catHoursMap[c] = (catHoursMap[c]||0) + (t.timeSpent||0); });
+
+      // Cross analysis: dept x category
+      const crossMap = {};
+      const allCats = new Set();
+      tasks.forEach(t => {
+        const d = t.department || '未分类';
+        const c = t.category || '未分类';
+        allCats.add(c);
+        if (!crossMap[d]) crossMap[d] = {};
+        if (!crossMap[d][c]) crossMap[d][c] = { count:0, hours:0 };
+        crossMap[d][c].count++;
+        crossMap[d][c].hours += (t.timeSpent||0);
+      });
+      const crossCategories = [...allCats].sort();
+      const crossRows = deptBreakdown.map(d => ({
+        dept: d.name,
+        data: Object.fromEntries(crossCategories.map(c => [c, crossMap[d.name]?.[c] ? { count: crossMap[d.name][c].count, hours: parseFloat(crossMap[d.name][c].hours.toFixed(1)) } : null])),
+        totalCount: d.total,
+        totalHours: d.hours
+      }));
+
+      // Time analysis
+      const completedHours = completed.reduce((s,t)=>s+(t.timeSpent||0),0);
+      const avgPerTask = tasks.length ? (totalHours/tasks.length) : 0;
+      const avgPerCompleted = completed.length ? (completedHours/completed.length) : 0;
+      const maxTask = tasks.reduce((max,t) => (t.timeSpent||0) > (max?.timeSpent||0) ? t : max, tasks[0]);
+      const topCatByHours = Object.entries(catHoursMap).sort((a,b)=>b[1]-a[1])[0];
+      const timeAnalysis = [
+        { label: '总投入工时', value: `${totalHours.toFixed(1)}h`, desc: `覆盖 ${tasks.length} 项事项，日均 ${(totalHours/(this.reportType==='weekly'?5:22)).toFixed(1)}h` },
+        { label: '已完成事项耗时', value: `${completedHours.toFixed(1)}h`, desc: `占总工时 ${totalHours ? Math.round(completedHours/totalHours*100) : 0}%，效率转化率高` },
+        { label: '平均单项耗时', value: `${avgPerTask.toFixed(1)}h`, desc: `已完成项平均 ${avgPerCompleted.toFixed(1)}h/项` },
+        { label: '最高耗时事项', value: maxTask ? `${(maxTask.timeSpent||0)}h` : '-', desc: maxTask ? `"${maxTask.name}"` : '-' },
+        { label: '耗时最多类型', value: topCatByHours ? `${topCatByHours[1].toFixed(1)}h` : '-', desc: topCatByHours ? `"${topCatByHours[0]}"占比${totalHours?Math.round(topCatByHours[1]/totalHours*100):0}%` : '-' },
+        { label: '耗时最多部门', value: deptBreakdown[0] ? `${deptBreakdown[0].hours}h` : '-', desc: deptBreakdown[0] ? `"${deptBreakdown[0].name}"占比${deptBreakdown[0].hoursPercent}%` : '-' },
+      ];
+
+      // Analysis summary
+      const periodLabel2 = this.reportType==='weekly'?'本周':this.reportType==='monthly'?'本月':'本年度';
+      let analysisSummary = `${periodLabel2}总投入 ${totalHours.toFixed(1)} 小时，平均每项耗时 ${avgPerTask.toFixed(1)}h。`;
+      if (deptBreakdown.length > 1) analysisSummary += `工时分布最集中的部门为"${deptBreakdown[0].name}"（${deptBreakdown[0].hoursPercent}%），`;
+      if (topCatByHours) analysisSummary += `耗时占比最大的工作类型为"${topCatByHours[0]}"（${totalHours?Math.round(topCatByHours[1]/totalHours*100):0}%）。`;
+
+      // Contribution highlights
+      const contributionHighlights = [];
+      contributionHighlights.push(`${periodLabel2}累计处理 ${tasks.length} 项工作事项，总投入 ${totalHours.toFixed(1)} 小时，工作饱和度${totalHours>=(this.reportType==='weekly'?35:140)?'高':'正常'}。`);
+      if (completed.length) contributionHighlights.push(`成功交付 ${completed.length} 项工作成果，完成率 ${rate}%，平均单项交付耗时 ${avgPerCompleted.toFixed(1)}h。`);
+      if (deptBreakdown.length >= 2) contributionHighlights.push(`工作横跨 ${deptBreakdown.length} 个业务板块，展现全面的业务支撑能力。`);
+      const highEffort = completed.filter(t => t.timeSpent >= 6).sort((a,b)=>b.timeSpent-a.timeSpent);
+      if (highEffort.length) contributionHighlights.push(`攻克 ${highEffort.length} 项高复杂度任务（${highEffort.slice(0,3).map(t=>`"${t.name}"${t.timeSpent}h`).join('、')}），体现持续攻坚能力。`);
+      if (inProgress.length) contributionHighlights.push(`当前仍有 ${inProgress.length} 项工作在推进中，保持良好的工作延续性。`);
+
+      // === 重点工作：按部门+类型汇总 ===
+      const deptWorkSummary = [];
+      deptBreakdown.forEach(dept => {
+        const deptTasks = tasks.filter(t => (t.department||'未分类') === dept.name);
+        const deptCompleted = deptTasks.filter(t => t.status === '已完成');
+        const catGroups = {};
+        deptTasks.forEach(t => {
+          const c = t.category || '未分类';
+          if (!catGroups[c]) catGroups[c] = { name:c, tasks:[], count:0, hours:0 };
+          catGroups[c].tasks.push(t);
+          catGroups[c].count++;
+          catGroups[c].hours += (t.timeSpent||0);
+        });
+        const categories = Object.values(catGroups).sort((a,b)=>b.hours-a.hours).map(g => {
+          g.hours = parseFloat(g.hours.toFixed(1));
+          // Generate summary text
+          const names = g.tasks.map(t => t.name);
+          if (names.length <= 4) {
+            g.summary = `主要事项：${names.join('、')}。`;
+          } else {
+            g.summary = `主要事项涵盖：${names.slice(0,4).join('、')}等${names.length}项工作。`;
+          }
+          // Add completion info
+          const gDone = g.tasks.filter(t=>t.status==='已完成').length;
+          if (gDone === g.count) g.summary = `已全部完成。` + g.summary;
+          else if (gDone > 0) g.summary = `已完成${gDone}项，进行中${g.count-gDone}项。` + g.summary;
+          return g;
+        });
+        deptWorkSummary.push({
+          name: dept.name,
+          total: dept.total,
+          completed: deptCompleted.length,
+          hours: dept.hours,
+          categories
+        });
+      });
+
+      // Summary text
+      const periodLabel = this.reportType==='weekly'?'周':this.reportType==='monthly'?'月':'年度';
+      const summaryParts = [];
+      summaryParts.push(`本${periodLabel}${this.reportDeptFilter ? '（'+this.reportDeptFilter+'）' : ''}共处理工作事项 ${tasks.length} 项`);
+      if (completed.length) summaryParts.push(`已完成 ${completed.length} 项`);
+      if (inProgress.length) summaryParts.push(`进行中 ${inProgress.length} 项`);
+      summaryParts.push(`整体完成率 ${rate}%`);
+      if (totalHours) summaryParts.push(`累计投入工时 ${totalHours.toFixed(1)} 小时`);
+      if (deptBreakdown.length > 1 && !this.reportDeptFilter) { summaryParts.push(`工作涉及 ${deptBreakdown.length} 个部门`); summaryParts.push(`其中${deptBreakdown[0].name}投入最多（${deptBreakdown[0].hours}h/${deptBreakdown[0].hoursPercent}%）`); }
+
+      // Highlights & issues
+      const { highlights, issues, highlightsSummary } = this.analyzeHighlightsAndIssues(tasks, completed, inProgress, pending, rate, totalHours, deptBreakdown, catMap);
+
+      // Auto-generate conclusion
+      const conclusion = this.generateConclusion(tasks, completed, inProgress, pending, rate, totalHours, deptBreakdown, deptWorkSummary);
+
+      // Merge contribution highlights into main highlights
+      highlights.unshift(...contributionHighlights);
+
+      // Next month plan
+      const nextMonthPlan = this.getNextMonthPlan();
+      let nextMonthPlanSummary = '';
+      if (nextMonthPlan.length) {
+        const nextCats = {};
+        nextMonthPlan.forEach(t => { const c = t.category || '未分类'; nextCats[c] = (nextCats[c]||0)+1; });
+        const catList = Object.entries(nextCats).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k}(${v}项)`).join('、');
+        nextMonthPlanSummary = `下月计划推进 ${nextMonthPlan.length} 项工作，主要集中在${catList}等方向。其中 ${nextMonthPlan.filter(t=>t.status==='进行中').length} 项为本期延续事项，${nextMonthPlan.filter(t=>t.status==='未开始').length} 项为新规划事项。`;
+      }
+
+      // Group next month plan by department, then by category
+      const nextMonthPlanByDept = [];
+      const deptGroups = {};
+      nextMonthPlan.forEach(t => {
+        const d = t.department || '未分类';
+        if (!deptGroups[d]) deptGroups[d] = { name: d, total: 0, hours: 0, catMap: {} };
+        deptGroups[d].total++;
+        deptGroups[d].hours += (t.timeSpent || 0);
+        const c = t.category || '未分类';
+        if (!deptGroups[d].catMap[c]) deptGroups[d].catMap[c] = { name: c, count: 0, hours: 0, tasks: [] };
+        deptGroups[d].catMap[c].count++;
+        deptGroups[d].catMap[c].hours += (t.timeSpent || 0);
+        deptGroups[d].catMap[c].tasks.push(t);
+      });
+      Object.values(deptGroups).forEach(dg => {
+        dg.hours = parseFloat(dg.hours.toFixed(1));
+        const categories = Object.values(dg.catMap).sort((a,b) => b.hours - a.hours);
+        categories.forEach(cat => {
+          cat.hours = parseFloat(cat.hours.toFixed(1));
+          const names = cat.tasks.map(t => t.name);
+          if (names.length <= 4) {
+            cat.summary = `主要事项：${names.join('、')}。`;
+          } else {
+            cat.summary = `主要事项涵盖：${names.slice(0,4).join('、')}等${names.length}项工作。`;
+          }
+        });
+        nextMonthPlanByDept.push({
+          name: dg.name,
+          total: dg.total,
+          hours: dg.hours,
+          categories
+        });
+      });
+      nextMonthPlanByDept.sort((a,b) => b.hours - a.hours);
+
+      this.reportData = {
+        title, period, generatedAt: this.formatDateTime(new Date()),
+        stats: { total:tasks.length, completed:completed.length, completionRate:rate, totalHours:parseFloat(totalHours.toFixed(1)) },
+        summary: summaryParts.join('，') + '。',
+        highlights, issues, highlightsSummary,
+        deptBreakdown,
+        crossAnalysis: { categories: crossCategories, rows: crossRows },
+        timeAnalysis, analysisSummary,
+        deptWorkSummary,
+        completedTasks: completed,
+        inProgressTasks: inProgress,
+        pendingTasks: pending,
+        catMap, catHoursMap,
+        conclusion,
+        nextMonthPlan, nextMonthPlanSummary, nextMonthPlanByDept
+      };
+      this.reportGenerated = true;
+      this.$nextTick(() => { this.renderCharts(); });
+    },
+
+    generateConclusion(tasks, completed, inProgress, pending, rate, totalHours, deptBreakdown, deptWorkSummary) {
+      const periodLabel = this.reportType==='weekly'?'本周':this.reportType==='monthly'?'本月':'本年度';
+      let parts = [];
+
+      parts.push(`${periodLabel}工作整体完成率 ${rate}%，累计投入 ${totalHours.toFixed(1)} 小时，共处理 ${tasks.length} 项工作事项。`);
+
+      if (deptWorkSummary.length) {
+        const topDepts = deptWorkSummary.filter(d => d.hours > 0).slice(0, 3);
+        if (topDepts.length) {
+          parts.push(`工作重心集中在${topDepts.map(d => `"${d.name}"（${d.total}项/${d.hours}h）`).join('、')}等板块，`);
+          if (rate >= 70) parts.push(`整体执行效率良好，各项重点工作均按计划有序推进。`);
+          else parts.push(`部分工作受制于外部依赖或资源瓶颈，推进节奏仍有提升空间。`);
+        }
+      }
+
+      if (inProgress.length || pending.length) {
+        const remainCount = inProgress.length + pending.length;
+        parts.push(`\n\n当前仍有 ${remainCount} 项工作待推进（${inProgress.length}项进行中、${pending.length}项待启动）。`);
+        const lowProgress = inProgress.filter(t => t.progress < 50);
+        if (lowProgress.length) {
+          parts.push(`其中 ${lowProgress.length} 项进度不足50%，需列为下阶段优先跟进项。`);
+        }
+      }
+
+      parts.push(`\n\n下一阶段工作重点：`);
+      if (inProgress.length) {
+        const topInProgress = inProgress.sort((a,b) => (a.progress||0) - (b.progress||0)).slice(0,3);
+        parts.push(`一是聚焦在途核心事项（${topInProgress.map(t=>`"${t.name}"`).join('、')}），确保按期交付；`);
+      }
+      if (pending.length) parts.push(`二是有序启动排期事项，合理分配时间和精力，避免任务堆积；`);
+      parts.push(`三是持续强化工作复盘与成果沉淀，提升工作可见度和知识复用率。`);
+
+      return parts.join('');
+    },
+
+    getNextMonthPlan() {
+      // 获取下个月的待办事项（未完成+进行中）
+      const now = new Date();
+      let targetYear, targetMonth;
+
+      if (this.reportType === 'monthly') {
+        const [y, m] = this.reportMonth.split('-').map(Number);
+        targetYear = m === 12 ? y + 1 : y;
+        targetMonth = m === 12 ? 1 : m + 1;
+      } else {
+        targetYear = now.getFullYear();
+        targetMonth = now.getMonth() + 2; // next month
+        if (targetMonth > 12) { targetMonth = 1; targetYear++; }
+      }
+
+      const [nextStart, nextEnd] = getMonthRange(`${targetYear}-${String(targetMonth).padStart(2,'0')}`);
+
+      // 获取下月的事项
+      let nextTasks = this.tasks.filter(t => {
+        if (!t.startTime) return false;
+        const td = new Date(t.startTime);
+        return td >= nextStart && td <= nextEnd;
+      });
+
+      // 也包含当前未完成的延续事项
+      const carryOver = this.tasks.filter(t => {
+        if (t.status === '已完成' || t.status === '已取消') return false;
+        if (!t.startTime) return t.status === '未开始' || t.status === '进行中';
+        const td = new Date(t.startTime);
+        return td < nextStart && (t.status === '进行中' || t.status === '未开始');
+      });
+
+      // 合并去重
+      const idSet = new Set(nextTasks.map(t => t.id));
+      carryOver.forEach(t => { if (!idSet.has(t.id)) { nextTasks.push(t); idSet.add(t.id); } });
+
+      // 过滤已完成的
+      nextTasks = nextTasks.filter(t => t.status !== '已完成' && t.status !== '已取消');
+
+      // 按部门筛选
+      if (this.reportDeptFilter) {
+        nextTasks = nextTasks.filter(t => t.department === this.reportDeptFilter);
+      }
+
+      return nextTasks.sort((a,b) => (a.progress||0) - (b.progress||0));
+    },
+
+    sectionNum(section) {
+      const sections = ['overview'];
+      sections.push('highlights');
+      if (this.reportData.completedTasks?.length) sections.push('completed');
+      if (this.reportData.inProgressTasks?.length) sections.push('inprogress');
+      sections.push('analysis');
+      if (this.reportData.deptBreakdown?.length && !this.reportDeptFilter) sections.push('dept');
+      if (this.reportData.pendingTasks?.length) sections.push('pending');
+      if (this.reportData.nextMonthPlanByDept?.length) sections.push('nextplan');
+      const idx = sections.indexOf(section);
+      return this.toChinese(idx >= 0 ? idx + 1 : sections.length);
+    },
+    toChinese(n) { return ['零','一','二','三','四','五','六','七','八','九','十','十一','十二'][n] || n; },
+
+    renderCharts() {
+      this.charts.forEach(c => c.destroy());
+      this.charts = [];
+      const rd = this.reportData;
+
+      // Dept hours pie (section 2) with datalabels
+      const deptHoursPie = document.getElementById('chart-dept-hours-pie');
+      if (deptHoursPie && rd.deptBreakdown.length) {
+        const labels = rd.deptBreakdown.map(d => d.name);
+        const data = rd.deptBreakdown.map(d => d.hours);
+        this.charts.push(new Chart(deptHoursPie, { type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:COLORS.slice(0,labels.length) }] }, options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{position:'bottom',labels:{font:{size:11,family:'Inter'}}}, datalabels:{ color:'#fff', font:{weight:'bold',size:11}, formatter:(value,ctx)=>{ const total = ctx.dataset.data.reduce((s,v)=>s+v,0); const pct = total ? Math.round(value/total*100) : 0; return pct >= 5 ? `${value}h\n${pct}%` : ''; } } } }, plugins:[ChartDataLabels] }));
+      }
+
+      // Dept count pie (section 2) with datalabels
+      const deptCountPie = document.getElementById('chart-dept-count-pie');
+      if (deptCountPie && rd.deptBreakdown.length) {
+        const labels = rd.deptBreakdown.map(d => d.name);
+        const data = rd.deptBreakdown.map(d => d.total);
+        this.charts.push(new Chart(deptCountPie, { type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:COLORS.slice(0,labels.length) }] }, options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{position:'bottom',labels:{font:{size:11,family:'Inter'}}}, datalabels:{ color:'#fff', font:{weight:'bold',size:11}, formatter:(value,ctx)=>{ const total = ctx.dataset.data.reduce((s,v)=>s+v,0); const pct = total ? Math.round(value/total*100) : 0; return pct >= 5 ? `${value}项\n${pct}%` : ''; } } } }, plugins:[ChartDataLabels] }));
+      }
+
+      // Cross analysis: per-department category hours charts (section 3.1)
+      if (rd.crossAnalysis && rd.crossAnalysis.rows) {
+        rd.crossAnalysis.rows.forEach(row => {
+          const canvasId = 'chart-cross-' + row.dept.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_');
+          const el = document.getElementById(canvasId);
+          if (!el) return;
+          const cats = rd.crossAnalysis.categories.filter(c => row.data[c] && row.data[c].hours > 0);
+          if (!cats.length) return;
+          const catLabels = cats;
+          const catHours = cats.map(c => row.data[c].hours);
+          this.charts.push(new Chart(el, { type:'doughnut', data:{ labels:catLabels, datasets:[{ data:catHours, backgroundColor:COLORS.slice(0,catLabels.length) }] }, options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{position:'bottom',labels:{font:{size:10,family:'Inter'}}}, datalabels:{ color:'#fff', font:{weight:'bold',size:10}, formatter:(value,ctx)=>{ const total = ctx.dataset.data.reduce((s,v)=>s+v,0); const pct = total ? Math.round(value/total*100) : 0; return pct >= 8 ? `${value}h` : ''; } } } }, plugins:[ChartDataLabels] }));
+        });
+      }
+    },
+
+    printReport() { window.print(); }
+  
+    // ===== GitHub Cloud Sync =====
+    githubConfig() {
+      return { username: '', token: '', repo: 'my-work' };
+    },
+
+    saveGithubConfig() {
+      try { localStorage.setItem('work_manager_github', JSON.stringify(this.githubConfig)); } catch(e) {}
+      this.updateSyncStatus('offline');
+    },
+
+    loadGithubConfig() {
+      try {
+        const gc = localStorage.getItem('work_manager_github');
+        if (gc) this.githubConfig = JSON.parse(gc);
+      } catch(e) {}
+    },
+
+    updateSyncStatus(status) {
+      this.syncStatus = status;
+    },
+
+    async syncToGithub() {
+      const { username, token, repo } = this.githubConfig;
+      if (!username || !token || !repo) {
+        this.showToast('请先配置 GitHub 信息', 'error');
+        return;
+      }
+      this.updateSyncStatus('syncing');
+      try {
+        const data = {
+          version: 2,
+          updatedAt: new Date().toISOString(),
+          tasks: this.tasks,
+          settings: this.settings,
+          colwidths: this.colWidths
+        };
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+        const path = 'data/work_manager_data.json';
+        const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/${path}`;
+
+        // Get current file SHA (needed for updates)
+        let sha = null;
+        try {
+          const getResp = await fetch(apiUrl, {
+            headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+          });
+          if (getResp.ok) {
+            const existing = await getResp.json();
+            sha = existing.sha;
+          }
+        } catch(e) {}
+
+        const body = {
+          message: `sync: ${this.tasks.length} tasks @ ${new Date().toLocaleString('zh-CN')}`,
+          content: content,
+          ...(sha && { sha: sha })
+        };
+
+        const resp = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (resp.ok) {
+          this.lastSyncTime = new Date().toLocaleString('zh-CN');
+          localStorage.setItem('work_manager_last_sync', this.lastSyncTime);
+          this.updateSyncStatus('synced');
+          this.showToast('云端同步成功！');
+        } else {
+          const err = await resp.json();
+          throw new Error(err.message || 'Upload failed');
+        }
+      } catch(e) {
+        this.updateSyncStatus('error');
+        this.showToast('同步失败：' + e.message, 'error');
+        console.error('GitHub sync error:', e);
+      }
+    },
+
+    async syncFromGithub() {
+      const { username, token, repo } = this.githubConfig;
+      if (!username || !token || !repo) {
+        this.showToast('请先配置 GitHub 信息', 'error');
+        return;
+      }
+      this.updateSyncStatus('syncing');
+      try {
+        const path = 'data/work_manager_data.json';
+        const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/${path}`;
+        const resp = await fetch(apiUrl, {
+          headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+
+        if (!resp.ok) {
+          if (resp.status === 404) {
+            this.showToast('云端暂无数据，请先上传', 'error');
+            this.updateSyncStatus('offline');
+            return;
+          }
+          throw new Error('Failed to fetch data');
+        }
+
+        const result = await resp.json();
+        const decoded = decodeURIComponent(escape(atob(result.content)));
+        const data = JSON.parse(decoded);
+
+        if (data.tasks && Array.isArray(data.tasks)) {
+          const count = data.tasks.length;
+          if (confirm(`云端有 ${count} 条数据。\n\n点击"确定"替换本地数据，点击"取消"放弃。`)) {
+            this.tasks = data.tasks;
+            if (data.settings) this.settings = { ...this.settings, ...data.settings };
+            if (data.colwidths) this.colWidths = { ...this.colWidths, ...data.colwidths };
+            this.saveTasks();
+            this.saveSettings();
+            this.saveColWidths();
+            this.lastSyncTime = new Date().toLocaleString('zh-CN');
+            localStorage.setItem('work_manager_last_sync', this.lastSyncTime);
+            this.updateSyncStatus('synced');
+            this.showToast(`已从云端恢复 ${count} 条数据！`);
+          }
+        }
+      } catch(e) {
+        this.updateSyncStatus('error');
+        this.showToast('下载失败：' + e.message, 'error');
+        console.error('GitHub sync error:', e);
+      }
+    },
+
+    // Debounced auto-sync after save
+    _syncTimer: null,
+    debouncedSyncToGithub() {
+      if (this.githubConfig.token) {
+        clearTimeout(this._syncTimer);
+        this._syncTimer = setTimeout(() => this.syncToGithub(), 3000);
+      }
+    },
+}
+}).mount('#app');
+</script>
+</body>
+</html>
