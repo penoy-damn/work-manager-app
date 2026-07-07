@@ -2231,9 +2231,7 @@ createApp({
     printReport() { window.print(); },
 
     // ===== GitHub Cloud Sync =====
-    githubConfig() {
-      return { username: '', token: '', repo: 'my-work' };
-    },
+
 
     saveGithubConfig() {
       try { localStorage.setItem('work_manager_github', JSON.stringify(this.githubConfig)); } catch(e) {}
